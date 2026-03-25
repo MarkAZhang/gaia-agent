@@ -3,20 +3,22 @@ from langchain_anthropic import ChatAnthropic
 from langchain_core.runnables import RunnableConfig
 
 from agent.deps import AgentDeps
-from agent.graph import TOOLS, build_graph
+from agent.graph import build_graph
+from tools.web_search import create_web_search
 
 
 def main():
     load_dotenv()
-    llm = ChatAnthropic(model="claude-opus-4-6").bind_tools(TOOLS)
+    tools = [create_web_search()]
+    llm = ChatAnthropic(model="claude-opus-4-6").bind_tools(tools)
     config = RunnableConfig(configurable={"deps": AgentDeps(llm=llm)})
-    graph = build_graph()
+    graph = build_graph(tools=tools)
     result = graph.invoke(
         {
             "messages": [
                 {
                     "role": "user",
-                    "content": "Use the noop tool with input 'hello'. Return the response as a single word.",
+                    "content": "Search the web for 'LangGraph framework' and summarize what you find.",
                 }
             ]
         },

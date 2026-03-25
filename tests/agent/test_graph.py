@@ -2,14 +2,21 @@ from unittest.mock import MagicMock
 
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
+from langchain_core.tools import tool
 
 from agent.deps import AgentDeps
 from agent.graph import build_graph
 
 
+@tool
+def fake_tavily_search(query: str) -> str:
+    """A fake search tool that returns a canned response for testing."""
+    return f"Search results for: {query}"
+
+
 def _build_with_mock(mock_llm: MagicMock):
     config = RunnableConfig(configurable={"deps": AgentDeps(llm=mock_llm)})
-    graph = build_graph()
+    graph = build_graph(tools=[fake_tavily_search])
     return graph, config
 
 
@@ -31,19 +38,23 @@ def test_graph_ends_when_no_tool_calls():
 
 def test_graph_calls_tool_and_loops_back():
     mock_llm = MagicMock()
-    # First call: LLM decides to use a tool
     tool_call_msg = AIMessage(
-        content="Let me use the tool.",
-        tool_calls=[{"name": "noop_tool", "args": {"input": "hello"}, "id": "call_1"}],
+        content="Let me search for that.",
+        tool_calls=[
+            {
+                "name": "fake_tavily_search",
+                "args": {"query": "LangGraph"},
+                "id": "call_1",
+            }
+        ],
     )
-    # Second call: LLM gives final answer after seeing tool result
-    final_msg = AIMessage(content="The tool returned: hello to you too!")
+    final_msg = AIMessage(content="LangGraph is a framework for building agents.")
 
     mock_llm.invoke.side_effect = [tool_call_msg, final_msg]
     graph, config = _build_with_mock(mock_llm)
 
     result = graph.invoke(
-        {"messages": [HumanMessage(content="Use noop")]},
+        {"messages": [HumanMessage(content="Search for LangGraph")]},
         config=config,
     )
 
@@ -56,29 +67,38 @@ def test_graph_calls_tool_and_loops_back():
     assert messages[1].tool_calls
     assert messages[2].type == "tool"
     assert messages[3].type == "ai"
-    assert messages[3].content == "The tool returned: hello to you too!"
+    assert messages[3].content == "LangGraph is a framework for building agents."
 
 
 def test_graph_handles_multiple_tool_calls():
     mock_llm = MagicMock()
-    # First call: use tool
     first_tool_msg = AIMessage(
-        content="First tool call.",
-        tool_calls=[{"name": "noop_tool", "args": {"input": "a"}, "id": "call_1"}],
+        content="First search.",
+        tool_calls=[
+            {
+                "name": "fake_tavily_search",
+                "args": {"query": "topic a"},
+                "id": "call_1",
+            }
+        ],
     )
-    # Second call: use tool again
     second_tool_msg = AIMessage(
-        content="Second tool call.",
-        tool_calls=[{"name": "noop_tool", "args": {"input": "b"}, "id": "call_2"}],
+        content="Second search.",
+        tool_calls=[
+            {
+                "name": "fake_tavily_search",
+                "args": {"query": "topic b"},
+                "id": "call_2",
+            }
+        ],
     )
-    # Third call: final answer
     final_msg = AIMessage(content="Done.")
 
     mock_llm.invoke.side_effect = [first_tool_msg, second_tool_msg, final_msg]
     graph, config = _build_with_mock(mock_llm)
 
     result = graph.invoke(
-        {"messages": [HumanMessage(content="Use noop twice")]},
+        {"messages": [HumanMessage(content="Search for two topics")]},
         config=config,
     )
 
@@ -89,8 +109,14 @@ def test_graph_handles_multiple_tool_calls():
 def test_graph_tool_result_content():
     mock_llm = MagicMock()
     tool_call_msg = AIMessage(
-        content="Calling tool.",
-        tool_calls=[{"name": "noop_tool", "args": {"input": "test"}, "id": "call_1"}],
+        content="Searching.",
+        tool_calls=[
+            {
+                "name": "fake_tavily_search",
+                "args": {"query": "test"},
+                "id": "call_1",
+            }
+        ],
     )
     final_msg = AIMessage(content="Got it.")
 
@@ -102,7 +128,6 @@ def test_graph_tool_result_content():
         config=config,
     )
 
-    # Find the tool message and verify the noop_tool returned the expected value
     tool_messages = [m for m in result["messages"] if m.type == "tool"]
     assert len(tool_messages) == 1
-    assert tool_messages[0].content == "test to you too!"
+    assert "Search results for: test" in tool_messages[0].content
