@@ -1,4 +1,4 @@
-from langchain_openai import ChatOpenAI
+from langchain_anthropic import ChatAnthropic
 from langgraph.graph import StateGraph, MessagesState, START, END
 from langgraph.prebuilt import ToolNode
 
@@ -17,7 +17,7 @@ SYSTEM_PROMPT = (
 
 
 def build_graph() -> StateGraph:
-    llm = ChatOpenAI(model="gpt-4o-mini").bind_tools(TOOLS)
+    llm = ChatAnthropic(model="claude-opus-4-6").bind_tools(TOOLS)
 
     def agent(state: MessagesState) -> dict:
         messages = state["messages"]
