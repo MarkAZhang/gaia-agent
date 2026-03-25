@@ -2,7 +2,7 @@ from langchain_anthropic import ChatAnthropic
 from langgraph.graph import StateGraph, MessagesState, START, END
 from langgraph.prebuilt import ToolNode
 
-from agent.tools import noop_tool
+from tools.noop_tool import noop_tool
 
 TOOLS = [noop_tool]
 
