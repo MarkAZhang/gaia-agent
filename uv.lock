@@ -425,6 +425,7 @@ dependencies = [
     { name = "langfuse" },
     { name = "langgraph" },
     { name = "python-dotenv" },
+    { name = "pyyaml" },
 ]
 
 [package.dev-dependencies]
@@ -440,6 +441,7 @@ requires-dist = [
     { name = "langfuse", specifier = ">=4.0.1" },
     { name = "langgraph", specifier = ">=0.4.1" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
+    { name = "pyyaml", specifier = ">=6.0.3" },
 ]
 
 [package.metadata.requires-dev]
