@@ -9,7 +9,7 @@ from agent.graph import build_graph
 
 def _build_with_mock(mock_llm: MagicMock):
     config = RunnableConfig(configurable={"deps": AgentDeps(llm=mock_llm)})
-    graph, config = build_graph(config)
+    graph = build_graph()
     return graph, config
 
 
