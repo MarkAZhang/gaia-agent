@@ -1,10 +1,20 @@
+from dotenv import load_dotenv
+
 from agent.graph import build_graph
 
 
 def main():
+    load_dotenv()
     graph = build_graph()
     result = graph.invoke(
-        {"messages": [{"role": "user", "content": "Use the noop tool with input 'hello'."}]}
+        {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "Use the noop tool with input 'hello'. Return the response as a single word.",
+                }
+            ]
+        }
     )
     for msg in result["messages"]:
         print(f"[{msg.type}] {msg.content}")
