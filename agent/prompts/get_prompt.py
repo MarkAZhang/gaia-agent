@@ -4,11 +4,12 @@ import yaml
 
 _PROMPTS_FILE = Path(__file__).parent / "prompts.yaml"
 
+with open(_PROMPTS_FILE) as _f:
+    _PROMPTS = yaml.safe_load(_f)
+
 
 def get_prompt(key: str) -> str:
     """Load a prompt by key from prompts.yaml."""
-    with open(_PROMPTS_FILE) as f:
-        prompts = yaml.safe_load(f)
-    if key not in prompts:
+    if key not in _PROMPTS:
         raise KeyError(f"Prompt '{key}' not found in {_PROMPTS_FILE.name}")
-    return prompts[key].strip()
+    return _PROMPTS[key].strip()
