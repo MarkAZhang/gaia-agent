@@ -1,10 +1,15 @@
 from dotenv import load_dotenv
+from langchain_anthropic import ChatAnthropic
+from langchain_core.runnables import RunnableConfig
 
-from agent.graph import build_graph
+from agent.deps import AgentDeps
+from agent.graph import TOOLS, build_graph
 
 
 def main():
     load_dotenv()
+    llm = ChatAnthropic(model="claude-opus-4-6").bind_tools(TOOLS)
+    config = RunnableConfig(configurable={"deps": AgentDeps(llm=llm)})
     graph = build_graph()
     result = graph.invoke(
         {
@@ -14,7 +19,8 @@ def main():
                     "content": "Use the noop tool with input 'hello'. Return the response as a single word.",
                 }
             ]
-        }
+        },
+        config=config,
     )
     for msg in result["messages"]:
         print(f"[{msg.type}] {msg.content}")
