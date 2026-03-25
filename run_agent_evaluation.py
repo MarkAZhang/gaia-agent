@@ -1,6 +1,8 @@
 from typing import TypedDict
 from langfuse import get_client
+from langfuse.langchain import CallbackHandler
 from dotenv import load_dotenv
+from langfuse.api import DatasetItem
 from agent.invoke_agent_with_user_message import invoke_agent_with_user_message
 
 from gaia_score_evaluator import gaia_score_evaluator
@@ -21,26 +23,22 @@ class DatasetItemInput(TypedDict):
     file_path: str
 
 
-class DatasetItem(TypedDict):
-    input: DatasetItemInput
-
-
-def run_agent_for_dataset_item_task(dataset_item: DatasetItem):
-    # TODO: Maybe add the Langfuse Callback Handler.
+def run_agent_for_dataset_item_task(*, item: DatasetItem):
     """
     Run agent for a single dataset item.
 
     Args:
-        dataset_item: The dataset item containing input and expected output.
+        item: The dataset item containing input and expected output.
     """
-    input = dataset_item["input"]
+    input: DatasetItemInput = item.input
+    langfuse_handler = CallbackHandler()
 
-    return invoke_agent_with_user_message(input["question"], langfuse_handler=None)
+    return invoke_agent_with_user_message(input["question"], langfuse_handler=langfuse_handler)
 
 
-def evaluate_agent_on_gaia_20(version_tag):
+def evaluate_agent_on_dataset(dataset, version_tag):
     langfuse = get_client()
-    dataset = langfuse.get_dataset("GAIA 20")
+    dataset = langfuse.get_dataset(dataset)
 
     dataset.run_experiment(
         name=version_tag,
@@ -53,4 +51,4 @@ def evaluate_agent_on_gaia_20(version_tag):
 
 if __name__ == "__main__":
     load_dotenv()
-    evaluate_agent_on_gaia_20(version_tag="2026-03-24-dry-run")
+    evaluate_agent_on_dataset(dataset="GAIA 2", version_tag="2026-03-24-dry-run")

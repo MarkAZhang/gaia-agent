@@ -7,22 +7,26 @@ from agent.invoke_agent_with_user_message import invoke_agent_with_user_message
 
 
 def _create_langfuse_handler():
-    """Create a Langfuse callback handler if USE_LANGFUSE is enabled."""
+    """
+    Create a Langfuse callback handler if USE_LANGFUSE is enabled.
+
+    NOTE: LANGFUSE_TRACING_ENVIRONMENT and other Langfuse-related
+    environment variables are automatically picked up by Langfuse.
+    """
     if os.environ.get("USE_LANGFUSE") != "1":
         return None
 
     from langfuse.langchain import CallbackHandler
 
-    environment = os.environ.get("LANGFUSE_TRACING_ENVIRONMENT")
-    return CallbackHandler(environment=environment)
+    return CallbackHandler()
 
 
-def main():
+def run_with_custom_user_message(user_message: str):
     load_dotenv()
 
     langfuse_handler = _create_langfuse_handler()
 
-    result = invoke_agent_with_user_message("Return hello world", langfuse_handler)
+    result = invoke_agent_with_user_message(user_message, langfuse_handler)
     print(result)
 
     if langfuse_handler:
@@ -31,4 +35,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    user_message = "Return hello world"
+    run_with_custom_user_message(user_message)
