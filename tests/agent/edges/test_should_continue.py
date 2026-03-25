@@ -60,3 +60,34 @@ def test_should_continue_ignores_non_refusal_stop_reason():
     )
     state = {"messages": [msg]}
     assert should_continue(state) == "check_and_get_final_answer"
+
+
+def test_should_continue_returns_tool_not_available_when_last_line_matches():
+    msg = AIMessage(
+        content="I tried to find a tool.\nTool not available: No calculator found"
+    )
+    state = {"messages": [msg]}
+    assert should_continue(state) == "return_llm_tool_not_available"
+
+
+def test_should_continue_returns_tool_not_available_single_line():
+    msg = AIMessage(content="Tool not available: No matching tool")
+    state = {"messages": [msg]}
+    assert should_continue(state) == "return_llm_tool_not_available"
+
+
+def test_should_continue_tool_not_available_only_checks_last_line():
+    msg = AIMessage(
+        content="Tool not available: something\nAns: 42"
+    )
+    state = {"messages": [msg]}
+    assert should_continue(state) == "check_and_get_final_answer"
+
+
+def test_should_continue_refusal_takes_priority_over_tool_not_available():
+    msg = AIMessage(
+        content="Tool not available: something",
+        response_metadata={"stop_reason": "refusal"},
+    )
+    state = {"messages": [msg]}
+    assert should_continue(state) == "return_llm_refusal"
