@@ -1,43 +1,27 @@
 from langchain_anthropic import ChatAnthropic
+from langchain_core.runnables import RunnableConfig
 from langgraph.graph import StateGraph, MessagesState, START, END
 from langgraph.prebuilt import ToolNode
 
+from agent.deps import AgentDeps
+from agent.nodes.llm_call import llm_call
+from agent.nodes.should_continue import should_continue
 from tools.noop_tool import noop_tool
 
 TOOLS = [noop_tool]
 
-SYSTEM_PROMPT = (
-    "You are a ReAct agent. For each user request, follow this loop:\n"
-    "1. THINK: Reason about the current state and what to do next.\n"
-    "2. ACT: Call a tool if needed.\n"
-    "3. OBSERVE: Review the tool result.\n"
-    "Repeat until you can provide a final answer.\n"
-    "Always explain your reasoning before acting."
-)
 
-
-def build_graph() -> StateGraph:
-    llm = ChatAnthropic(model="claude-opus-4-6").bind_tools(TOOLS)
-
-    def agent(state: MessagesState) -> dict:
-        messages = state["messages"]
-        if not messages or messages[0].type != "system":
-            messages = [{"role": "system", "content": SYSTEM_PROMPT}] + messages
-        response = llm.invoke(messages)
-        return {"messages": [response]}
-
-    def should_continue(state: MessagesState) -> str:
-        last_message = state["messages"][-1]
-        if last_message.tool_calls:
-            return "tools"
-        return END
+def build_graph(config: RunnableConfig | None = None):
+    if config is None:
+        llm = ChatAnthropic(model="claude-opus-4-6").bind_tools(TOOLS)
+        config = RunnableConfig(configurable={"deps": AgentDeps(llm=llm)})
 
     graph = StateGraph(MessagesState)
-    graph.add_node("agent", agent)
+    graph.add_node("llm_call", llm_call)
     graph.add_node("tools", ToolNode(TOOLS))
 
-    graph.add_edge(START, "agent")
-    graph.add_conditional_edges("agent", should_continue, ["tools", END])
-    graph.add_edge("tools", "agent")
+    graph.add_edge(START, "llm_call")
+    graph.add_conditional_edges("llm_call", should_continue, ["tools", END])
+    graph.add_edge("tools", "llm_call")
 
-    return graph.compile()
+    return graph.compile(), config

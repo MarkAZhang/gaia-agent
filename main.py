@@ -5,7 +5,7 @@ from agent.graph import build_graph
 
 def main():
     load_dotenv()
-    graph = build_graph()
+    graph, config = build_graph()
     result = graph.invoke(
         {
             "messages": [
@@ -14,7 +14,8 @@ def main():
                     "content": "Use the noop tool with input 'hello'. Return the response as a single word.",
                 }
             ]
-        }
+        },
+        config=config,
     )
     for msg in result["messages"]:
         print(f"[{msg.type}] {msg.content}")
