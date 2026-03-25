@@ -32,3 +32,31 @@ def test_should_continue_uses_last_message():
     last = AIMessage(content="Final answer.")
     state = {"messages": [first, last]}
     assert should_continue(state) == "check_and_get_final_answer"
+
+
+def test_should_continue_returns_refusal_when_stop_reason_is_refusal():
+    msg = AIMessage(
+        content="I cannot assist with that.",
+        response_metadata={"stop_reason": "refusal"},
+    )
+    state = {"messages": [msg]}
+    assert should_continue(state) == "return_llm_refusal"
+
+
+def test_should_continue_refusal_takes_priority_over_tool_calls():
+    msg = AIMessage(
+        content="Refused.",
+        tool_calls=[{"name": "noop_tool", "args": {"input": "hi"}, "id": "1"}],
+        response_metadata={"stop_reason": "refusal"},
+    )
+    state = {"messages": [msg]}
+    assert should_continue(state) == "return_llm_refusal"
+
+
+def test_should_continue_ignores_non_refusal_stop_reason():
+    msg = AIMessage(
+        content="Done.",
+        response_metadata={"stop_reason": "end_turn"},
+    )
+    state = {"messages": [msg]}
+    assert should_continue(state) == "check_and_get_final_answer"

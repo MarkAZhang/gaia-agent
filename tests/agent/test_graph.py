@@ -121,6 +121,24 @@ def test_graph_handles_multiple_tool_calls():
     assert result["messages"][-1].content == "Done."
 
 
+def test_graph_ends_with_refusal_message_when_llm_refuses():
+    mock_llm = MagicMock()
+    mock_llm.invoke.return_value = AIMessage(
+        content="I cannot assist with that.",
+        response_metadata={"stop_reason": "refusal"},
+    )
+    graph, config = _build_with_mock(mock_llm)
+
+    result = graph.invoke(
+        {"messages": [HumanMessage(content="Do something bad")]},
+        config=config,
+    )
+
+    messages = result["messages"]
+    assert messages[-1].content == "LLM refused to continue"
+    mock_llm.invoke.assert_called_once()
+
+
 def test_graph_tool_result_content():
     mock_llm = MagicMock()
     tool_call_msg = AIMessage(
