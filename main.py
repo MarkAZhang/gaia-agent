@@ -1,13 +1,9 @@
 import os
 
 from dotenv import load_dotenv
-from langchain_anthropic import ChatAnthropic
-from langchain_core.runnables import RunnableConfig
-
-from agent.deps import AgentDeps
-from agent.graph import build_graph
-from tools.web_search import create_web_search
 from langfuse import get_client
+
+from agent.invoke_agent_with_user_message import invoke_agent_with_user_message
 
 
 def _create_langfuse_handler():
@@ -17,7 +13,8 @@ def _create_langfuse_handler():
 
     from langfuse.langchain import CallbackHandler
 
-    return CallbackHandler()
+    environment = os.environ.get("LANGFUSE_TRACING_ENVIRONMENT")
+    return CallbackHandler(environment=environment)
 
 
 def main():
@@ -25,29 +22,8 @@ def main():
 
     langfuse_handler = _create_langfuse_handler()
 
-    tools = [create_web_search()]
-    llm = ChatAnthropic(model="claude-opus-4-6").bind_tools(tools)
-    config = RunnableConfig(
-        configurable={"deps": AgentDeps(llm=llm)},
-        callbacks=[langfuse_handler] if langfuse_handler else [],
-    )
-    graph = build_graph(tools=tools)
-    result = graph.invoke(
-        {
-            "messages": [
-                {
-                    "role": "user",
-                    "content": "Return hello world",
-                }
-            ]
-        },
-        config=config,
-    )
-    for msg in result["messages"]:
-        print(f"[{msg.type}] {msg.content}")
-        if hasattr(msg, "tool_calls") and msg.tool_calls:
-            for tc in msg.tool_calls:
-                print(f"  -> tool_call: {tc['name']}({tc['args']})")
+    result = invoke_agent_with_user_message("Return hello world", langfuse_handler)
+    print(result)
 
     if langfuse_handler:
         langfuse = get_client()
