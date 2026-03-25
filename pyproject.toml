@@ -1,0 +1,14 @@
+[project]
+name = "gaia-agent-orchestrator"
+version = "0.1.0"
+description = "GAIA agent orchestrator using LangGraph"
+requires-python = ">=3.11"
+dependencies = [
+    "langgraph>=0.4.1",
+    "langchain-anthropic>=0.3.0",
+    "python-dotenv>=1.0.0",
+]
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
