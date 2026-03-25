@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock
 
-from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
+from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
 
@@ -20,9 +20,9 @@ def _build_with_mock(mock_llm: MagicMock):
     return graph, config
 
 
-def test_graph_ends_when_no_tool_calls():
+def test_graph_ends_when_answer_formatted_correctly():
     mock_llm = MagicMock()
-    mock_llm.invoke.return_value = AIMessage(content="Hello!")
+    mock_llm.invoke.return_value = AIMessage(content="Thinking.\nAns: Hello!")
     graph, config = _build_with_mock(mock_llm)
 
     result = graph.invoke(
@@ -32,8 +32,24 @@ def test_graph_ends_when_no_tool_calls():
 
     messages = result["messages"]
     assert messages[-1].content == "Hello!"
-    assert not messages[-1].tool_calls
     mock_llm.invoke.assert_called_once()
+
+
+def test_graph_retries_when_answer_not_formatted():
+    mock_llm = MagicMock()
+    bad_msg = AIMessage(content="The answer is 42.")
+    good_msg = AIMessage(content="Let me fix that.\nAns: 42")
+
+    mock_llm.invoke.side_effect = [bad_msg, good_msg]
+    graph, config = _build_with_mock(mock_llm)
+
+    result = graph.invoke(
+        {"messages": [HumanMessage(content="What is 6*7?")]},
+        config=config,
+    )
+
+    assert mock_llm.invoke.call_count == 2
+    assert result["messages"][-1].content == "42"
 
 
 def test_graph_calls_tool_and_loops_back():
@@ -48,7 +64,7 @@ def test_graph_calls_tool_and_loops_back():
             }
         ],
     )
-    final_msg = AIMessage(content="LangGraph is a framework for building agents.")
+    final_msg = AIMessage(content="Ans: LangGraph is a framework.")
 
     mock_llm.invoke.side_effect = [tool_call_msg, final_msg]
     graph, config = _build_with_mock(mock_llm)
@@ -61,13 +77,12 @@ def test_graph_calls_tool_and_loops_back():
     messages = result["messages"]
     assert mock_llm.invoke.call_count == 2
 
-    # Verify the sequence: human -> ai (tool_call) -> tool -> ai (final)
     assert messages[0].type == "human"
     assert messages[1].type == "ai"
     assert messages[1].tool_calls
     assert messages[2].type == "tool"
     assert messages[3].type == "ai"
-    assert messages[3].content == "LangGraph is a framework for building agents."
+    assert messages[-1].content == "LangGraph is a framework."
 
 
 def test_graph_handles_multiple_tool_calls():
@@ -92,7 +107,7 @@ def test_graph_handles_multiple_tool_calls():
             }
         ],
     )
-    final_msg = AIMessage(content="Done.")
+    final_msg = AIMessage(content="Ans: Done.")
 
     mock_llm.invoke.side_effect = [first_tool_msg, second_tool_msg, final_msg]
     graph, config = _build_with_mock(mock_llm)
@@ -118,7 +133,7 @@ def test_graph_tool_result_content():
             }
         ],
     )
-    final_msg = AIMessage(content="Got it.")
+    final_msg = AIMessage(content="Ans: Got it.")
 
     mock_llm.invoke.side_effect = [tool_call_msg, final_msg]
     graph, config = _build_with_mock(mock_llm)
