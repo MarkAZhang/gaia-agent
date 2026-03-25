@@ -1,8 +1,10 @@
 from langgraph.graph import StateGraph, MessagesState, START, END
 from langgraph.prebuilt import ToolNode
 
+from agent.edges.check_answer_routing import check_answer_routing
+from agent.edges.should_continue import should_continue
+from agent.nodes.check_and_get_final_answer import check_and_get_final_answer
 from agent.nodes.llm_call import llm_call
-from agent.nodes.should_continue import should_continue
 from tools.web_search import create_web_search
 
 
@@ -13,9 +15,17 @@ def build_graph(tools=None):
     graph = StateGraph(MessagesState)
     graph.add_node("llm_call", llm_call)
     graph.add_node("tools", ToolNode(tools))
+    graph.add_node("check_and_get_final_answer", check_and_get_final_answer)
 
     graph.add_edge(START, "llm_call")
-    graph.add_conditional_edges("llm_call", should_continue, ["tools", END])
+    graph.add_conditional_edges(
+        "llm_call", should_continue, ["tools", "check_and_get_final_answer"]
+    )
     graph.add_edge("tools", "llm_call")
+    graph.add_conditional_edges(
+        "check_and_get_final_answer",
+        check_answer_routing,
+        ["llm_call", END],
+    )
 
     return graph.compile()

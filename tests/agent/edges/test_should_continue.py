@@ -1,7 +1,6 @@
 from langchain_core.messages import AIMessage
-from langgraph.graph import END
 
-from agent.nodes.should_continue import should_continue
+from agent.edges.should_continue import should_continue
 
 
 def test_should_continue_returns_tools_when_tool_calls_present():
@@ -13,16 +12,16 @@ def test_should_continue_returns_tools_when_tool_calls_present():
     assert should_continue(state) == "tools"
 
 
-def test_should_continue_returns_end_when_no_tool_calls():
+def test_should_continue_returns_check_node_when_no_tool_calls():
     msg = AIMessage(content="Final answer.")
     state = {"messages": [msg]}
-    assert should_continue(state) == END
+    assert should_continue(state) == "check_and_get_final_answer"
 
 
-def test_should_continue_returns_end_with_empty_tool_calls():
+def test_should_continue_returns_check_node_with_empty_tool_calls():
     msg = AIMessage(content="Done.", tool_calls=[])
     state = {"messages": [msg]}
-    assert should_continue(state) == END
+    assert should_continue(state) == "check_and_get_final_answer"
 
 
 def test_should_continue_uses_last_message():
@@ -32,4 +31,4 @@ def test_should_continue_uses_last_message():
     )
     last = AIMessage(content="Final answer.")
     state = {"messages": [first, last]}
-    assert should_continue(state) == END
+    assert should_continue(state) == "check_and_get_final_answer"
