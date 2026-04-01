@@ -18,6 +18,7 @@ class DatasetItemInput(TypedDict):
         file_path: The path to the file associated with the question.
     """
 
+    task_id: str
     question: str
     file_name: str
     file_path: str
@@ -32,16 +33,20 @@ def run_agent_for_dataset_item_task(*, item: DatasetItem):
     """
     input: DatasetItemInput = item.input
     langfuse_handler = CallbackHandler()
+    print("Running agent for task_id:", input["task_id"])
 
-    return invoke_agent_with_user_message(input["question"], langfuse_handler=langfuse_handler)
+    return invoke_agent_with_user_message(
+        input["question"], langfuse_handler=langfuse_handler
+    )
 
 
-def evaluate_agent_on_dataset(dataset, version_tag):
+def evaluate_agent_on_dataset(dataset, name, description):
     langfuse = get_client()
     dataset = langfuse.get_dataset(dataset)
 
     dataset.run_experiment(
-        name=version_tag,
+        name=name,
+        description=description,
         task=run_agent_for_dataset_item_task,
         evaluators=[gaia_score_evaluator],
     )
@@ -51,4 +56,8 @@ def evaluate_agent_on_dataset(dataset, version_tag):
 
 if __name__ == "__main__":
     load_dotenv()
-    evaluate_agent_on_dataset(dataset="GAIA 2", version_tag="2026-03-24-dry-run")
+    evaluate_agent_on_dataset(
+        dataset="GAIA 20",
+        name="2026-03-25-initial-evaluation",
+        description="Initial evaluation of GAIA agent. Basic prompt with LLM refusal and Tool Not Available. Only web search tool.",
+    )

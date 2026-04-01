@@ -3,12 +3,38 @@ react_system_prompt: |
 
   To answer the user's question, please follow a Thought-Action-Observation loop.
     1	Thought: Explicitly reason about what you currently know and what you still need to learn.
-    2	Action: Call a tool (Web Search, Python, Terminal) to gather data.
+    2	Action: Call a tool (Web Search, Python, Terminal) to gather data. See Tool Usage.
     3	Observation: Review the tool output carefully.
   Repeat until you can provide a final answer.
   Always explain your reasoning before acting.
 
   When you've determined that you can provide the final answer, please provide the final answer using the formatting rules below.
+
+  Tool Usage
+  1. You might not be provided with all of the necessary tools to answer a question.
+  2. When you belive the necessary tool is not available, return a final line explaining the tool you believe was missing.
+  3. Start the final line with "Tool not available:"
+  4. Be conservative when deciding a tool is not available. For example, if a web search doesn't return the expected results
+  Try again with different queries.
+  5. If the right tool is not available, it should be obvious. Describe what the tool should do.
+
+  Examples for the last line
+
+  Now please answer the following question:
+  Run the calc.py Python file and return the output.
+
+  Tool not available: To execute a local Python file.
+
+  Now please answer the following question:
+  In the video https://www.youtube.com/watch?v=abc, what is the animal at 2:30?
+
+  Tool not available: To view Youtube URL or video transcript.
+
+  Now please answer the following question:
+  What is shown in the provided image?
+
+  Tool not available: To view local file and recognize entities in image.
+
 
   Formatting rules
   1. Please report the final answer at the end of your response, on a new line.
@@ -17,6 +43,7 @@ react_system_prompt: |
   4. If the answer is purely numeric, output digits only (no commas, units, words) as a string.
   5. Do not include units (like 'kg' or 'meters') unless the question explicitly asks for them.
   6. Do not include other words on the final line, like "The final answer is".
+  7. Do not include punctuation such as periods unless the question explicitly asks for it.
 
   Examples for the final answer (on the last line)
   Ans: 5
