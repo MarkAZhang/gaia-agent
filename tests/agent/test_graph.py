@@ -139,6 +139,23 @@ def test_graph_ends_with_refusal_message_when_llm_refuses():
     mock_llm.invoke.assert_called_once()
 
 
+def test_graph_ends_with_tool_not_available_message():
+    mock_llm = MagicMock()
+    mock_llm.invoke.return_value = AIMessage(
+        content="I need a calculator.\nTool not available: No calculator tool found"
+    )
+    graph, config = _build_with_mock(mock_llm)
+
+    result = graph.invoke(
+        {"messages": [HumanMessage(content="What is 2+2?")]},
+        config=config,
+    )
+
+    messages = result["messages"]
+    assert messages[-1].content == "Tool not available: No calculator tool found"
+    mock_llm.invoke.assert_called_once()
+
+
 def test_graph_tool_result_content():
     mock_llm = MagicMock()
     tool_call_msg = AIMessage(
