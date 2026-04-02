@@ -27,7 +27,7 @@ def run_with_custom_user_message(user_message: str):
     langfuse_handler = _create_langfuse_handler()
 
     result = invoke_agent_with_user_message(user_message, langfuse_handler)
-    print(result)
+    print(result.answer)
 
     if langfuse_handler:
         langfuse = get_client()

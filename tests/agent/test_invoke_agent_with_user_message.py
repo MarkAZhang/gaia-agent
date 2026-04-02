@@ -1,32 +1,117 @@
 from unittest.mock import MagicMock, patch
 
-from langchain_core.messages import AIMessage
+from langchain_core.messages import AIMessage, ToolMessage
 
-from agent.invoke_agent_with_user_message import invoke_agent_with_user_message
+from agent.agent_response import AgentResponse, AgentRunMetrics
+from agent.invoke_agent_with_user_message import (
+    _compute_metrics,
+    invoke_agent_with_user_message,
+)
+
+
+class TestComputeMetrics:
+    def test_empty_messages(self):
+        input_tokens, output_tokens, total_turns = _compute_metrics([])
+        assert input_tokens == 0
+        assert output_tokens == 0
+        assert total_turns == 0
+
+    def test_single_ai_message_with_usage(self):
+        msg = AIMessage(
+            content="hello",
+            response_metadata={"usage": {"input_tokens": 10, "output_tokens": 20}},
+        )
+        input_tokens, output_tokens, total_turns = _compute_metrics([msg])
+        assert input_tokens == 10
+        assert output_tokens == 20
+        assert total_turns == 1
+
+    def test_multiple_ai_messages_sums_tokens(self):
+        msg1 = AIMessage(
+            content="first",
+            response_metadata={"usage": {"input_tokens": 10, "output_tokens": 5}},
+        )
+        msg2 = AIMessage(
+            content="second",
+            response_metadata={"usage": {"input_tokens": 30, "output_tokens": 15}},
+        )
+        input_tokens, output_tokens, total_turns = _compute_metrics([msg1, msg2])
+        assert input_tokens == 40
+        assert output_tokens == 20
+        assert total_turns == 2
+
+    def test_tool_messages_count_as_turns(self):
+        ai_msg = AIMessage(
+            content="call tool",
+            response_metadata={"usage": {"input_tokens": 10, "output_tokens": 5}},
+        )
+        tool_msg = ToolMessage(content="tool result", tool_call_id="1")
+        input_tokens, output_tokens, total_turns = _compute_metrics(
+            [ai_msg, tool_msg]
+        )
+        assert input_tokens == 10
+        assert output_tokens == 5
+        assert total_turns == 2
+
+    def test_ai_message_without_usage_metadata(self):
+        msg = AIMessage(content="hello", response_metadata={})
+        input_tokens, output_tokens, total_turns = _compute_metrics([msg])
+        assert input_tokens == 0
+        assert output_tokens == 0
+        assert total_turns == 1
+
+    def test_mixed_message_types(self):
+        from langchain_core.messages import HumanMessage
+
+        human = HumanMessage(content="question")
+        ai1 = AIMessage(
+            content="thinking",
+            response_metadata={"usage": {"input_tokens": 100, "output_tokens": 50}},
+        )
+        tool = ToolMessage(content="result", tool_call_id="1")
+        ai2 = AIMessage(
+            content="answer",
+            response_metadata={"usage": {"input_tokens": 200, "output_tokens": 30}},
+        )
+        input_tokens, output_tokens, total_turns = _compute_metrics(
+            [human, ai1, tool, ai2]
+        )
+        assert input_tokens == 300
+        assert output_tokens == 80
+        assert total_turns == 3  # 2 AI + 1 Tool; Human not counted
 
 
 class TestInvokeAgentWithUserMessage:
     @patch("agent.invoke_agent_with_user_message.build_graph")
     @patch("agent.invoke_agent_with_user_message.ChatAnthropic")
     @patch("agent.invoke_agent_with_user_message.create_web_search")
-    def test_returns_final_message_content(
+    def test_returns_agent_response(
         self, mock_create_web_search, mock_chat_anthropic, mock_build_graph
     ):
-        mock_tool = MagicMock()
-        mock_create_web_search.return_value = mock_tool
-
-        mock_llm = MagicMock()
-        mock_chat_anthropic.return_value.bind_tools.return_value = mock_llm
+        mock_create_web_search.return_value = MagicMock()
+        mock_chat_anthropic.return_value.bind_tools.return_value = MagicMock()
 
         mock_graph = MagicMock()
         mock_build_graph.return_value = mock_graph
         mock_graph.invoke.return_value = {
-            "messages": [AIMessage(content="Hello world")]
+            "messages": [
+                AIMessage(
+                    content="Hello world",
+                    response_metadata={
+                        "usage": {"input_tokens": 10, "output_tokens": 20}
+                    },
+                )
+            ]
         }
 
         result = invoke_agent_with_user_message("say hello", langfuse_handler=None)
 
-        assert result == "Hello world"
+        assert isinstance(result, AgentResponse)
+        assert result.answer == "Hello world"
+        assert result.metrics.input_tokens == 10
+        assert result.metrics.output_tokens == 20
+        assert result.metrics.total_turns == 1
+        assert result.metrics.latency_seconds >= 0
 
     @patch("agent.invoke_agent_with_user_message.build_graph")
     @patch("agent.invoke_agent_with_user_message.ChatAnthropic")
@@ -43,7 +128,10 @@ class TestInvokeAgentWithUserMessage:
 
         result = invoke_agent_with_user_message("say hello", langfuse_handler=None)
 
-        assert result == "No answer found"
+        assert result.answer == "No answer found"
+        assert result.metrics.input_tokens == 0
+        assert result.metrics.output_tokens == 0
+        assert result.metrics.total_turns == 0
 
     @patch("agent.invoke_agent_with_user_message.build_graph")
     @patch("agent.invoke_agent_with_user_message.ChatAnthropic")
@@ -150,3 +238,22 @@ class TestInvokeAgentWithUserMessage:
         invoke_agent_with_user_message("question", langfuse_handler=None)
 
         mock_llm_instance.bind_tools.assert_called_once_with([mock_tool])
+
+    @patch("agent.invoke_agent_with_user_message.build_graph")
+    @patch("agent.invoke_agent_with_user_message.ChatAnthropic")
+    @patch("agent.invoke_agent_with_user_message.create_web_search")
+    def test_latency_is_positive(
+        self, mock_create_web_search, mock_chat_anthropic, mock_build_graph
+    ):
+        mock_create_web_search.return_value = MagicMock()
+        mock_chat_anthropic.return_value.bind_tools.return_value = MagicMock()
+
+        mock_graph = MagicMock()
+        mock_build_graph.return_value = mock_graph
+        mock_graph.invoke.return_value = {
+            "messages": [AIMessage(content="response")]
+        }
+
+        result = invoke_agent_with_user_message("question", langfuse_handler=None)
+
+        assert result.metrics.latency_seconds >= 0

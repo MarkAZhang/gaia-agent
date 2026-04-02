@@ -1,11 +1,14 @@
 import re
 from langfuse import Evaluation
 
+from agent.agent_response import AgentResponse
+
 
 def gaia_score_evaluator(*, input, output, expected_output, **kwargs):
     """
     Normalizes and compares the agent output with the GAIA ground truth.
     """
+    answer = output.answer if isinstance(output, AgentResponse) else output
 
     def normalize(text):
         if not text:
@@ -20,10 +23,10 @@ def gaia_score_evaluator(*, input, output, expected_output, **kwargs):
         except ValueError:
             return text
 
-    is_correct = normalize(output) == normalize(expected_output)
+    is_correct = normalize(answer) == normalize(expected_output)
 
     return Evaluation(
         name="exact_match",
         value=1.0 if is_correct else 0.0,
-        comment=f"Expected: {expected_output} | Got: {output}",
+        comment=f"Expected: {expected_output} | Got: {answer}",
     )
