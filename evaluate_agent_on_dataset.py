@@ -1,7 +1,6 @@
 from typing import TypedDict
 from langfuse import get_client
 from langfuse.langchain import CallbackHandler
-from dotenv import load_dotenv
 from langfuse.api import DatasetItem
 from agent.invoke_agent_with_user_message import invoke_agent_with_user_message
 
@@ -64,12 +63,3 @@ def evaluate_agent_on_dataset(dataset, name, description):
     )
 
     langfuse.flush()
-
-
-if __name__ == "__main__":
-    load_dotenv()
-    evaluate_agent_on_dataset(
-        dataset="GAIA 20",
-        name="2026-03-25-initial-evaluation",
-        description="Initial evaluation of GAIA agent. Basic prompt with LLM refusal and Tool Not Available. Only web search tool.",
-    )

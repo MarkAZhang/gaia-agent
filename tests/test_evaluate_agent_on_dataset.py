@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 from agent.agent_response import AgentResponse, AgentRunMetrics
-from run_agent_evaluation import run_agent_for_dataset_item_task
+from evaluate_agent_on_dataset import run_agent_for_dataset_item_task
 
 
 def _make_agent_response(**overrides):
@@ -18,9 +18,9 @@ def _make_agent_response(**overrides):
     return AgentResponse(**defaults)
 
 
-class TestRunAgentForDatasetItemTask:
-    @patch("run_agent_evaluation.invoke_agent_with_user_message")
-    @patch("run_agent_evaluation.CallbackHandler")
+class TestEvaluateAgentOnDataset:
+    @patch("evaluate_agent_on_dataset.invoke_agent_with_user_message")
+    @patch("evaluate_agent_on_dataset.CallbackHandler")
     def test_passes_question_to_invoke_agent(
         self, mock_callback_handler_cls, mock_invoke
     ):
@@ -49,8 +49,8 @@ class TestRunAgentForDatasetItemTask:
             langfuse_handler=mock_callback_handler_cls.return_value,
         )
 
-    @patch("run_agent_evaluation.invoke_agent_with_user_message")
-    @patch("run_agent_evaluation.CallbackHandler")
+    @patch("evaluate_agent_on_dataset.invoke_agent_with_user_message")
+    @patch("evaluate_agent_on_dataset.CallbackHandler")
     def test_returns_agent_response(self, mock_callback_handler_cls, mock_invoke):
         expected = _make_agent_response(
             answer="the answer is 4",
@@ -76,8 +76,8 @@ class TestRunAgentForDatasetItemTask:
 
         assert result is expected
 
-    @patch("run_agent_evaluation.invoke_agent_with_user_message")
-    @patch("run_agent_evaluation.CallbackHandler")
+    @patch("evaluate_agent_on_dataset.invoke_agent_with_user_message")
+    @patch("evaluate_agent_on_dataset.CallbackHandler")
     def test_creates_langfuse_callback_handler(
         self, mock_callback_handler_cls, mock_invoke
     ):
@@ -95,8 +95,8 @@ class TestRunAgentForDatasetItemTask:
 
         mock_callback_handler_cls.assert_called_once()
 
-    @patch("run_agent_evaluation.invoke_agent_with_user_message")
-    @patch("run_agent_evaluation.CallbackHandler")
+    @patch("evaluate_agent_on_dataset.invoke_agent_with_user_message")
+    @patch("evaluate_agent_on_dataset.CallbackHandler")
     def test_passes_langfuse_handler_to_invoke_agent(
         self, mock_callback_handler_cls, mock_invoke
     ):
