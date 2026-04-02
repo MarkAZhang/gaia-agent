@@ -1,5 +1,17 @@
-from agent.agent_result import AgentResult
-from gaia_score_evaluator import gaia_score_evaluator
+from agent.agent_response import AgentResponse, AgentRunMetrics
+from evaluators.gaia_score_evaluator import gaia_score_evaluator
+
+
+def _make_agent_response(answer):
+    return AgentResponse(
+        answer=answer,
+        metrics=AgentRunMetrics(
+            latency_seconds=1.0,
+            input_tokens=10,
+            output_tokens=5,
+            total_turns=1,
+        ),
+    )
 
 
 class TestGaiaScoreEvaluator:
@@ -16,30 +28,18 @@ class TestGaiaScoreEvaluator:
         )
         assert result.value == 0.0
 
-    def test_handles_agent_result_output(self):
-        agent_result = AgentResult(
-            answer="42",
-            latency_seconds=1.0,
-            input_tokens=10,
-            output_tokens=5,
-            total_turns=1,
-        )
+    def test_handles_agent_response_output(self):
+        agent_response = _make_agent_response("42")
         result = gaia_score_evaluator(
-            input={}, output=agent_result, expected_output="42"
+            input={}, output=agent_response, expected_output="42"
         )
         assert result.value == 1.0
         assert "42" in result.comment
 
-    def test_agent_result_no_match(self):
-        agent_result = AgentResult(
-            answer="wrong",
-            latency_seconds=1.0,
-            input_tokens=10,
-            output_tokens=5,
-            total_turns=1,
-        )
+    def test_agent_response_no_match(self):
+        agent_response = _make_agent_response("wrong")
         result = gaia_score_evaluator(
-            input={}, output=agent_result, expected_output="correct"
+            input={}, output=agent_response, expected_output="correct"
         )
         assert result.value == 0.0
 

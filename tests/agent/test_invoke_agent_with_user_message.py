@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 from langchain_core.messages import AIMessage, ToolMessage
 
-from agent.agent_result import AgentResult
+from agent.agent_response import AgentResponse, AgentRunMetrics
 from agent.invoke_agent_with_user_message import (
     _compute_metrics,
     invoke_agent_with_user_message,
@@ -85,7 +85,7 @@ class TestInvokeAgentWithUserMessage:
     @patch("agent.invoke_agent_with_user_message.build_graph")
     @patch("agent.invoke_agent_with_user_message.ChatAnthropic")
     @patch("agent.invoke_agent_with_user_message.create_web_search")
-    def test_returns_agent_result(
+    def test_returns_agent_response(
         self, mock_create_web_search, mock_chat_anthropic, mock_build_graph
     ):
         mock_create_web_search.return_value = MagicMock()
@@ -106,12 +106,12 @@ class TestInvokeAgentWithUserMessage:
 
         result = invoke_agent_with_user_message("say hello", langfuse_handler=None)
 
-        assert isinstance(result, AgentResult)
+        assert isinstance(result, AgentResponse)
         assert result.answer == "Hello world"
-        assert result.input_tokens == 10
-        assert result.output_tokens == 20
-        assert result.total_turns == 1
-        assert result.latency_seconds >= 0
+        assert result.metrics.input_tokens == 10
+        assert result.metrics.output_tokens == 20
+        assert result.metrics.total_turns == 1
+        assert result.metrics.latency_seconds >= 0
 
     @patch("agent.invoke_agent_with_user_message.build_graph")
     @patch("agent.invoke_agent_with_user_message.ChatAnthropic")
@@ -129,9 +129,9 @@ class TestInvokeAgentWithUserMessage:
         result = invoke_agent_with_user_message("say hello", langfuse_handler=None)
 
         assert result.answer == "No answer found"
-        assert result.input_tokens == 0
-        assert result.output_tokens == 0
-        assert result.total_turns == 0
+        assert result.metrics.input_tokens == 0
+        assert result.metrics.output_tokens == 0
+        assert result.metrics.total_turns == 0
 
     @patch("agent.invoke_agent_with_user_message.build_graph")
     @patch("agent.invoke_agent_with_user_message.ChatAnthropic")
@@ -256,4 +256,4 @@ class TestInvokeAgentWithUserMessage:
 
         result = invoke_agent_with_user_message("question", langfuse_handler=None)
 
-        assert result.latency_seconds >= 0
+        assert result.metrics.latency_seconds >= 0

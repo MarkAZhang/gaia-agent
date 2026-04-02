@@ -4,7 +4,7 @@ from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import AIMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
 
-from agent.agent_result import AgentResult
+from agent.agent_response import AgentResponse, AgentRunMetrics
 from agent.deps import AgentDeps
 from agent.graph import build_graph
 from tools.web_search import create_web_search
@@ -28,7 +28,7 @@ def _compute_metrics(messages):
     return input_tokens, output_tokens, total_turns
 
 
-def invoke_agent_with_user_message(input_str, langfuse_handler) -> AgentResult:
+def invoke_agent_with_user_message(input_str, langfuse_handler) -> AgentResponse:
     tools = [create_web_search()]
     llm = ChatAnthropic(model="claude-opus-4-6").bind_tools(tools)
     config = RunnableConfig(
@@ -48,10 +48,12 @@ def invoke_agent_with_user_message(input_str, langfuse_handler) -> AgentResult:
     final_answer = messages[-1].content if messages else "No answer found"
     input_tokens, output_tokens, total_turns = _compute_metrics(messages)
 
-    return AgentResult(
+    return AgentResponse(
         answer=final_answer,
-        latency_seconds=latency_seconds,
-        input_tokens=input_tokens,
-        output_tokens=output_tokens,
-        total_turns=total_turns,
+        metrics=AgentRunMetrics(
+            latency_seconds=latency_seconds,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            total_turns=total_turns,
+        ),
     )

@@ -5,10 +5,13 @@ from dotenv import load_dotenv
 from langfuse.api import DatasetItem
 from agent.invoke_agent_with_user_message import invoke_agent_with_user_message
 
-from gaia_score_evaluator import gaia_score_evaluator
-from latency_evaluator import latency_evaluator
-from token_usage_evaluator import input_tokens_evaluator, output_tokens_evaluator
-from total_turns_evaluator import total_turns_evaluator
+from evaluators.gaia_score_evaluator import gaia_score_evaluator
+from evaluators.metrics.latency_evaluator import latency_evaluator
+from evaluators.metrics.token_usage_evaluator import (
+    input_tokens_evaluator,
+    output_tokens_evaluator,
+)
+from evaluators.metrics.total_turns_evaluator import total_turns_evaluator
 
 
 class DatasetItemInput(TypedDict):
