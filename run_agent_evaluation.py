@@ -6,6 +6,9 @@ from langfuse.api import DatasetItem
 from agent.invoke_agent_with_user_message import invoke_agent_with_user_message
 
 from gaia_score_evaluator import gaia_score_evaluator
+from latency_evaluator import latency_evaluator
+from token_usage_evaluator import input_tokens_evaluator, output_tokens_evaluator
+from total_turns_evaluator import total_turns_evaluator
 
 
 class DatasetItemInput(TypedDict):
@@ -48,7 +51,13 @@ def evaluate_agent_on_dataset(dataset, name, description):
         name=name,
         description=description,
         task=run_agent_for_dataset_item_task,
-        evaluators=[gaia_score_evaluator],
+        evaluators=[
+            gaia_score_evaluator,
+            latency_evaluator,
+            input_tokens_evaluator,
+            output_tokens_evaluator,
+            total_turns_evaluator,
+        ],
     )
 
     langfuse.flush()
