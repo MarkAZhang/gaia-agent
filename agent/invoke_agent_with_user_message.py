@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import time
-from typing import Iterable, Optional, Sequence, Union
+from typing import Optional
 
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import AIMessage, ToolMessage
@@ -14,24 +14,23 @@ from agent.graph import build_graph
 from tools.web_search import create_web_search
 
 
-def _build_file_paths_block(available_file_paths: Optional[Sequence[str]]) -> str:
-    """Render the file-paths section injected into the system prompt.
+def _build_file_path_block(available_file_path: Optional[str]) -> str:
+    """Render the file-path section injected into the system prompt.
 
-    Returns an empty string when no paths were provided so the conclusion
+    Returns an empty string when no path was provided so the conclusion
     section renders cleanly.
     """
-    if not available_file_paths:
+    if not available_file_path:
         return ""
-    lines = "\n".join(f"- {p}" for p in available_file_paths)
-    return f"Available file paths:\n{lines}\n\n"
+    return f"Provided file path:\n- {available_file_path}\n\n"
 
 
 def build_system_prompt(
-    available_file_paths: Optional[Sequence[str]] = None,
+    available_file_path: Optional[str] = None,
 ) -> str:
     return get_prompt(
         "react_system_prompt",
-        file_paths_block=_build_file_paths_block(available_file_paths),
+        file_paths_block=_build_file_path_block(available_file_path),
     )
 
 
@@ -76,17 +75,10 @@ def build_agent_graph_and_config(langfuse_handler) -> AgentCompiledGraphAndConfi
 def invoke_agent_with_user_message(
     input_str,
     langfuse_handler,
-    available_file_paths: Optional[Union[str, Iterable[str]]] = None,
+    available_file_path: Optional[str] = None,
 ) -> AgentResponse:
-    if isinstance(available_file_paths, str):
-        file_paths: Optional[Sequence[str]] = [available_file_paths]
-    elif available_file_paths is None:
-        file_paths = None
-    else:
-        file_paths = list(available_file_paths)
-
     compiled_graph_and_config = build_agent_graph_and_config(langfuse_handler)
-    system_prompt = build_system_prompt(file_paths)
+    system_prompt = build_system_prompt(available_file_path)
 
     start_time = time.monotonic()
     result = compiled_graph_and_config.graph.invoke(

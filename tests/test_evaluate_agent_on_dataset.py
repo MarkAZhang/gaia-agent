@@ -47,6 +47,7 @@ class TestEvaluateAgentOnDataset:
         mock_invoke.assert_called_once_with(
             "What is 2+2?",
             langfuse_handler=mock_callback_handler_cls.return_value,
+            available_file_path=None,
         )
 
     @patch("evaluate_agent_on_dataset.invoke_agent_with_user_message")
@@ -116,3 +117,43 @@ class TestEvaluateAgentOnDataset:
 
         _, kwargs = mock_invoke.call_args
         assert kwargs["langfuse_handler"] is mock_handler
+
+    @patch("evaluate_agent_on_dataset.invoke_agent_with_user_message")
+    @patch("evaluate_agent_on_dataset.CallbackHandler")
+    def test_passes_file_path_to_invoke_agent(
+        self, mock_callback_handler_cls, mock_invoke
+    ):
+        mock_invoke.return_value = _make_agent_response()
+
+        item = MagicMock()
+        item.input = {
+            "task_id": "task1",
+            "question": "q",
+            "file_name": "abc.png",
+            "file_path": "2023/validation/abc.png",
+        }
+
+        run_agent_for_dataset_item_task(item=item)
+
+        _, kwargs = mock_invoke.call_args
+        assert kwargs["available_file_path"] == "2023/validation/abc.png"
+
+    @patch("evaluate_agent_on_dataset.invoke_agent_with_user_message")
+    @patch("evaluate_agent_on_dataset.CallbackHandler")
+    def test_passes_none_file_path_when_empty(
+        self, mock_callback_handler_cls, mock_invoke
+    ):
+        mock_invoke.return_value = _make_agent_response()
+
+        item = MagicMock()
+        item.input = {
+            "task_id": "task1",
+            "question": "q",
+            "file_name": "",
+            "file_path": "",
+        }
+
+        run_agent_for_dataset_item_task(item=item)
+
+        _, kwargs = mock_invoke.call_args
+        assert kwargs["available_file_path"] is None

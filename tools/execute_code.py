@@ -53,8 +53,8 @@ def execute_code_snippet(snippet: str, language: Optional[str] = "python") -> st
 def execute_code_file(file_path: str, language: Optional[str] = "python") -> str:
     """Execute a local code file in a secure E2B sandbox and return its output.
 
-    Provide an agent-facing file path (for example one listed under
-    "Available file paths" in the system prompt). The tool resolves it
+    Provide an agent-facing file path (for example the one listed under
+    "Provided file path" in the system prompt). The tool resolves it
     to the real location on disk, reads the contents, and executes them
     in the sandbox. Defaults to Python; pass `language` to use another
     supported language (e.g. "javascript", "r", "bash"). Returns a JSON

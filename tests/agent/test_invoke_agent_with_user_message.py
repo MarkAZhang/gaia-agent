@@ -154,7 +154,7 @@ class TestInvokeAgentWithUserMessage:
         call_args = mock_graph.invoke.call_args
         messages = call_args[0][0]["messages"]
         assert messages[0]["role"] == "system"
-        assert "Available file paths:" not in messages[0]["content"]
+        assert "Provided file path:" not in messages[0]["content"]
         assert messages[-1] == {"role": "user", "content": "test question"}
 
     @patch("agent.invoke_agent_with_user_message.build_graph")
@@ -263,7 +263,7 @@ class TestInvokeAgentWithUserMessage:
     @patch("agent.invoke_agent_with_user_message.build_graph")
     @patch("agent.invoke_agent_with_user_message.ChatAnthropic")
     @patch("agent.invoke_agent_with_user_message.create_web_search")
-    def test_single_file_path_string_added_to_system_prompt(
+    def test_file_path_added_to_system_prompt(
         self, mock_create_web_search, mock_chat_anthropic, mock_build_graph
     ):
         mock_create_web_search.return_value = MagicMock()
@@ -277,64 +277,38 @@ class TestInvokeAgentWithUserMessage:
         invoke_agent_with_user_message(
             "question",
             langfuse_handler=None,
-            available_file_paths="2023/validation/abc.png",
+            available_file_path="2023/validation/abc.png",
         )
 
         messages = mock_graph.invoke.call_args[0][0]["messages"]
         system_content = messages[0]["content"]
-        assert "Available file paths:" in system_content
+        assert "Provided file path:" in system_content
         assert "- 2023/validation/abc.png" in system_content
-        file_paths_idx = system_content.index("Available file paths:")
+        file_path_idx = system_content.index("Provided file path:")
         # The conclusion copy appears multiple times (once in the
         # tool_not_available examples), so anchor on the final one.
         conclusion_idx = system_content.rindex(
             "Now please answer the following question:"
         )
-        assert file_paths_idx < conclusion_idx
-
-    @patch("agent.invoke_agent_with_user_message.build_graph")
-    @patch("agent.invoke_agent_with_user_message.ChatAnthropic")
-    @patch("agent.invoke_agent_with_user_message.create_web_search")
-    def test_multiple_file_paths_iterable_added_to_system_prompt(
-        self, mock_create_web_search, mock_chat_anthropic, mock_build_graph
-    ):
-        mock_create_web_search.return_value = MagicMock()
-        mock_chat_anthropic.return_value.bind_tools.return_value = MagicMock()
-        mock_graph = MagicMock()
-        mock_build_graph.return_value = mock_graph
-        mock_graph.invoke.return_value = {
-            "messages": [AIMessage(content="response")]
-        }
-
-        invoke_agent_with_user_message(
-            "question",
-            langfuse_handler=None,
-            available_file_paths=["a/b.png", "c/d.csv"],
-        )
-
-        system_content = mock_graph.invoke.call_args[0][0]["messages"][0][
-            "content"
-        ]
-        assert "- a/b.png" in system_content
-        assert "- c/d.csv" in system_content
+        assert file_path_idx < conclusion_idx
 
 
 class TestBuildSystemPrompt:
-    def test_no_file_paths_has_files_section_but_no_listing(self):
+    def test_no_file_path_has_files_section_but_no_listing(self):
         prompt = build_system_prompt()
         assert "<files>" in prompt
-        assert "Available file paths:" not in prompt
+        assert "Provided file path:" not in prompt
         assert "Now please answer the following question:" in prompt
 
-    def test_empty_file_paths_list_has_no_listing(self):
-        prompt = build_system_prompt([])
-        assert "Available file paths:" not in prompt
+    def test_empty_file_path_has_no_listing(self):
+        prompt = build_system_prompt(None)
+        assert "Provided file path:" not in prompt
 
-    def test_file_paths_appear_right_before_conclusion_question(self):
-        prompt = build_system_prompt(["foo/bar.png"])
-        assert "Available file paths:\n- foo/bar.png" in prompt
+    def test_file_path_appears_right_before_conclusion_question(self):
+        prompt = build_system_prompt("foo/bar.png")
+        assert "Provided file path:\n- foo/bar.png" in prompt
         # The listing must appear inside the conclusion section, directly
         # before the question line.
-        tail = prompt.split("Available file paths:")[1]
+        tail = prompt.split("Provided file path:")[1]
         assert tail.lstrip().startswith("- foo/bar.png")
         assert "Now please answer the following question:" in tail
