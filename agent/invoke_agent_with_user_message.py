@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import time
 
 from langchain_anthropic import ChatAnthropic
@@ -6,6 +7,7 @@ from langchain_core.runnables import RunnableConfig
 
 from agent.agent_response import AgentResponse, AgentRunMetrics
 from agent.deps import AgentDeps
+from langgraph.graph.state import CompiledStateGraph
 from agent.graph import build_graph
 from tools.web_search import create_web_search
 
@@ -28,19 +30,33 @@ def _compute_metrics(messages):
     return input_tokens, output_tokens, total_turns
 
 
-def invoke_agent_with_user_message(input_str, langfuse_handler) -> AgentResponse:
-    tools = [create_web_search()]
+def _get_tools():
+    return [create_web_search()]
+
+
+@dataclass
+class AgentCompiledGraphAndConfig:
+    graph: CompiledStateGraph
+    config: RunnableConfig
+
+
+def build_agent_graph_and_config(langfuse_handler) -> AgentCompiledGraphAndConfig:
+    tools = _get_tools()
     llm = ChatAnthropic(model="claude-opus-4-6").bind_tools(tools)
     config = RunnableConfig(
         configurable={"deps": AgentDeps(llm=llm)},
         callbacks=[langfuse_handler] if langfuse_handler else [],
     )
-    graph = build_graph(tools=tools)
+    return AgentCompiledGraphAndConfig(graph=build_graph(tools=tools), config=config)
+
+
+def invoke_agent_with_user_message(input_str, langfuse_handler) -> AgentResponse:
+    compiled_graph_and_config = build_agent_graph_and_config(langfuse_handler)
 
     start_time = time.monotonic()
-    result = graph.invoke(
+    result = compiled_graph_and_config.graph.invoke(
         {"messages": [{"role": "user", "content": input_str}]},
-        config=config,
+        config=compiled_graph_and_config.config,
     )
     latency_seconds = time.monotonic() - start_time
 

@@ -8,9 +8,10 @@ from agent.nodes.llm_call import llm_call
 from agent.nodes.return_llm_refusal import return_llm_refusal
 from agent.nodes.return_llm_tool_not_available import return_llm_tool_not_available
 from tools.web_search import create_web_search
+from langgraph.graph.state import CompiledStateGraph
 
 
-def build_graph(tools=None):
+def build_graph(tools=None) -> CompiledStateGraph:
     if tools is None:
         tools = [create_web_search()]
 
