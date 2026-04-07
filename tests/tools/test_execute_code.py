@@ -1,3 +1,4 @@
+import json
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
@@ -16,7 +17,7 @@ def _patch_sandbox(execution):
     cm = MagicMock()
     cm.__enter__.return_value = sandbox_instance
     cm.__exit__.return_value = False
-    return patch("tools.execute_code.Sandbox", return_value=cm), sandbox_instance
+    return patch("tools.execute_code.Sandbox.create", return_value=cm), sandbox_instance
 
 
 def test_execute_code_snippet_default_language_python():
@@ -28,7 +29,8 @@ def test_execute_code_snippet_default_language_python():
         result = execute_code_snippet.invoke({"snippet": "print('hello')"})
 
     sandbox.run_code.assert_called_once_with("print('hello')", language="python")
-    assert "stdout:\nhello\n" in result
+    payload = json.loads(result)
+    assert payload["stdout"] == "hello\n"
 
 
 def test_execute_code_snippet_custom_language():
@@ -46,7 +48,8 @@ def test_execute_code_snippet_custom_language():
     sandbox.run_code.assert_called_once_with(
         "console.log(42)", language="javascript"
     )
-    assert "result: 42" in result
+    payload = json.loads(result)
+    assert payload["results"] == ["42"]
 
 
 def test_execute_code_snippet_reports_error_and_stderr():
@@ -60,8 +63,9 @@ def test_execute_code_snippet_reports_error_and_stderr():
     with patcher:
         result = execute_code_snippet.invoke({"snippet": "raise ValueError('boom')"})
 
-    assert "stderr:\nbad\n" in result
-    assert "error: ValueError: boom" in result
+    payload = json.loads(result)
+    assert payload["stderr"] == "bad\n"
+    assert payload["error"] == "ValueError: boom"
 
 
 def test_execute_code_snippet_no_output():
@@ -71,7 +75,8 @@ def test_execute_code_snippet_no_output():
     with patcher:
         result = execute_code_snippet.invoke({"snippet": "x = 1"})
 
-    assert result == "(no output)"
+    payload = json.loads(result)
+    assert payload == {"stdout": "", "stderr": "", "error": None, "results": []}
 
 
 def test_execute_code_file_reads_and_runs_file():
@@ -87,7 +92,8 @@ def test_execute_code_file_reads_and_runs_file():
 
     mock_path.assert_called_once_with("/tmp/script.py")
     sandbox.run_code.assert_called_once_with("print('ok')", language="python")
-    assert "stdout:\nok" in result
+    payload = json.loads(result)
+    assert payload["stdout"] == "ok"
 
 
 def test_execute_code_file_custom_language():
