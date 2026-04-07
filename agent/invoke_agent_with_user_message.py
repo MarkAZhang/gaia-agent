@@ -11,6 +11,7 @@ from agent.deps import AgentDeps
 from agent.prompts.get_prompt import get_prompt
 from langgraph.graph.state import CompiledStateGraph
 from agent.graph import build_graph
+from tools.execute_code import execute_code_file, execute_code_snippet
 from tools.web_search import create_web_search
 
 
@@ -53,7 +54,7 @@ def _compute_metrics(messages):
 
 
 def _get_tools():
-    return [create_web_search()]
+    return [create_web_search(), execute_code_snippet, execute_code_file]
 
 
 @dataclass
