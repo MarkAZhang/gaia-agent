@@ -56,6 +56,16 @@ react_system_prompt:
     7. Do not include punctuation such as periods unless the question explicitly asks for it.
     </formatting_rules>
 
+  files: |
+    <files>
+    File Handling
+    1. Some questions come with one or more file paths that point to files you can inspect or process.
+    2. File paths might or might not be provided. When they are, they will be listed at the end of this prompt under "Available file paths".
+    3. When no file paths are listed, the question does not involve any attached file.
+    4. To work with a provided file, pass its path exactly as shown to a tool that accepts a file path (for example, `execute_code_file`). The tool will resolve it to the actual file on disk.
+    5. Do not attempt to fabricate, guess, or rewrite file paths. Only use paths that are explicitly listed below.
+    </files>
+
   final_answer_examples: |
     <final_answer_examples>
     Examples for the final answer (on the last line)
@@ -66,7 +76,7 @@ react_system_prompt:
 
   conclusion: |
     <conclusion>
-    Now please answer the following question:
+    {file_paths_block}Now please answer the following question:
     </conclusion>
 
 final_answer_format_error: |

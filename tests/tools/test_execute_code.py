@@ -84,13 +84,17 @@ def test_execute_code_file_reads_and_runs_file():
 
     execution = _mock_execution(stdout=["ok"])
     patcher, sandbox = _patch_sandbox(execution)
-    with patcher, patch(
-        "tools.execute_code.Path"
-    ) as mock_path:
+    with patcher, patch("tools.execute_code.Path") as mock_path:
         mock_path.return_value.read_text.return_value = "print('ok')"
-        result = execute_code_file.invoke({"file_name": "/tmp/script.py"})
+        result = execute_code_file.invoke(
+            {"file_path": "2023/validation/script.py"}
+        )
 
-    mock_path.assert_called_once_with("/tmp/script.py")
+    # The agent-facing path should be resolved to the GAIA files root
+    # before the file is read from disk.
+    mock_path.assert_called_once_with(
+        ".gaia-questions/files/2023/validation/script.py"
+    )
     sandbox.run_code.assert_called_once_with("print('ok')", language="python")
     payload = json.loads(result)
     assert payload["stdout"] == "ok"
@@ -103,7 +107,8 @@ def test_execute_code_file_custom_language():
     with patcher, patch("tools.execute_code.Path") as mock_path:
         mock_path.return_value.read_text.return_value = "echo hi"
         execute_code_file.invoke(
-            {"file_name": "run.sh", "language": "bash"}
+            {"file_path": "run.sh", "language": "bash"}
         )
 
+    mock_path.assert_called_once_with(".gaia-questions/files/run.sh")
     sandbox.run_code.assert_called_once_with("echo hi", language="bash")

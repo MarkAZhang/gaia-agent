@@ -6,6 +6,8 @@ from typing import Optional
 from e2b_code_interpreter import Sandbox
 from langchain_core.tools import tool
 
+from agent.file_paths import to_local_file_path
+
 
 @dataclass
 class CodeExecutionResult:
@@ -48,13 +50,16 @@ def execute_code_snippet(snippet: str, language: Optional[str] = "python") -> st
 
 
 @tool
-def execute_code_file(file_name: str, language: Optional[str] = "python") -> str:
+def execute_code_file(file_path: str, language: Optional[str] = "python") -> str:
     """Execute a local code file in a secure E2B sandbox and return its output.
 
-    Provide the path to a file on the local filesystem; its contents will be
-    read and executed in the sandbox. Defaults to Python; pass `language` to
-    use another supported language (e.g. "javascript", "r", "bash"). Returns a
-    JSON string with stdout, stderr, error, and results fields.
+    Provide an agent-facing file path (for example one listed under
+    "Available file paths" in the system prompt). The tool resolves it
+    to the real location on disk, reads the contents, and executes them
+    in the sandbox. Defaults to Python; pass `language` to use another
+    supported language (e.g. "javascript", "r", "bash"). Returns a JSON
+    string with stdout, stderr, error, and results fields.
     """
-    code = Path(file_name).read_text()
+    local_path = to_local_file_path(file_path)
+    code = Path(local_path).read_text()
     return _run_in_sandbox(code, language)
