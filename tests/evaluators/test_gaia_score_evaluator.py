@@ -16,9 +16,7 @@ def _make_agent_response(answer):
 
 class TestGaiaScoreEvaluator:
     def test_exact_match(self):
-        result = gaia_score_evaluator(
-            input={}, output="42", expected_output="42"
-        )
+        result = gaia_score_evaluator(input={}, output="42", expected_output="42")
         assert result.name == "exact_match"
         assert result.value == 1.0
 
@@ -44,25 +42,17 @@ class TestGaiaScoreEvaluator:
         assert result.value == 0.0
 
     def test_normalizes_numeric_values(self):
-        result = gaia_score_evaluator(
-            input={}, output="15.0", expected_output="15"
-        )
+        result = gaia_score_evaluator(input={}, output="15.0", expected_output="15")
         assert result.value == 1.0
 
     def test_case_insensitive(self):
-        result = gaia_score_evaluator(
-            input={}, output="HELLO", expected_output="hello"
-        )
+        result = gaia_score_evaluator(input={}, output="HELLO", expected_output="hello")
         assert result.value == 1.0
 
     def test_empty_output(self):
-        result = gaia_score_evaluator(
-            input={}, output="", expected_output="answer"
-        )
+        result = gaia_score_evaluator(input={}, output="", expected_output="answer")
         assert result.value == 0.0
 
     def test_none_output(self):
-        result = gaia_score_evaluator(
-            input={}, output=None, expected_output="answer"
-        )
+        result = gaia_score_evaluator(input={}, output=None, expected_output="answer")
         assert result.value == 0.0

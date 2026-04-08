@@ -11,7 +11,7 @@ def gaia_score_evaluator(*, input, output, expected_output, **kwargs):
     answer = output.answer if isinstance(output, AgentResponse) else output
 
     def normalize(text):
-        if not text:
+        if text == "" or text is None:
             return ""
         text = str(text).lower().strip()
         # Remove common units, currency symbols, and articles

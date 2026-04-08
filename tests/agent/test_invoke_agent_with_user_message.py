@@ -8,6 +8,7 @@ from agent.invoke_agent_with_user_message import (
     build_system_prompt,
     invoke_agent_with_user_message,
 )
+from tools.execute_code import execute_code_file, execute_code_snippet
 
 
 class TestComputeMetrics:
@@ -218,7 +219,9 @@ class TestInvokeAgentWithUserMessage:
 
         invoke_agent_with_user_message("question", langfuse_handler=None)
 
-        mock_build_graph.assert_called_once_with(tools=[mock_tool])
+        mock_build_graph.assert_called_once_with(
+            tools=[mock_tool, execute_code_snippet, execute_code_file]
+        )
 
     @patch("agent.invoke_agent_with_user_message.build_graph")
     @patch("agent.invoke_agent_with_user_message.ChatAnthropic")
@@ -239,7 +242,9 @@ class TestInvokeAgentWithUserMessage:
 
         invoke_agent_with_user_message("question", langfuse_handler=None)
 
-        mock_llm_instance.bind_tools.assert_called_once_with([mock_tool])
+        mock_llm_instance.bind_tools.assert_called_once_with(
+            [mock_tool, execute_code_snippet, execute_code_file]
+        )
 
     @patch("agent.invoke_agent_with_user_message.build_graph")
     @patch("agent.invoke_agent_with_user_message.ChatAnthropic")
