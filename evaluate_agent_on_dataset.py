@@ -49,9 +49,9 @@ def run_agent_for_dataset_item_task(*, item: DatasetItem) -> AgentResponse:
     )
 
 
-def evaluate_agent_on_dataset(dataset: str, name: str, description: str) -> None:
+def evaluate_agent_on_dataset(dataset_name: str, name: str, description: str):
     langfuse = get_client()
-    dataset = langfuse.get_dataset(dataset)
+    dataset = langfuse.get_dataset(dataset_name)
 
     dataset.run_experiment(
         name=name,

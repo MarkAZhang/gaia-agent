@@ -1,18 +1,30 @@
+from __future__ import annotations
+
 import re
-from typing import Any
+from typing import TYPE_CHECKING, Any, Dict, Union
 
 from langfuse import Evaluation
 
 from agent.agent_response import AgentResponse
 
+if TYPE_CHECKING:
+    from evaluate_agent_on_dataset import DatasetItemInput
+
 
 def gaia_score_evaluator(
-    *, input: Any, output: Any, expected_output: Any, **kwargs: Any
+    *,
+    input: DatasetItemInput,
+    output: Union[str, Dict[str, Any], AgentResponse],
+    expected_output: str,
+    **kwargs: Any,
 ) -> Evaluation:
     """
     Normalizes and compares the agent output with the GAIA ground truth.
     """
-    answer = output.answer if isinstance(output, AgentResponse) else output
+    if not isinstance(output, AgentResponse):
+        return Evaluation(name="exact_match", value=0.0, comment="No AgentResponse")
+
+    answer = output.answer
 
     def normalize(text: Any) -> str:
         if text == "" or text is None:

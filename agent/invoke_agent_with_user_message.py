@@ -1,11 +1,12 @@
 from dataclasses import dataclass
 import time
-from typing import Any, Optional
+from typing import Optional
 
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import AIMessage, BaseMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import BaseTool
+from langfuse.langchain import CallbackHandler
 
 from agent.agent_response import AgentResponse, AgentRunMetrics
 from agent.deps import AgentDeps
@@ -65,7 +66,7 @@ class AgentCompiledGraphAndConfig:
 
 
 def build_agent_graph_and_config(
-    langfuse_handler: Optional[Any],
+    langfuse_handler: Optional[CallbackHandler],
 ) -> AgentCompiledGraphAndConfig:
     tools = _get_tools()
     llm = ChatAnthropic(model="claude-opus-4-6").bind_tools(tools)
@@ -78,7 +79,7 @@ def build_agent_graph_and_config(
 
 def invoke_agent_with_user_message(
     input_str: str,
-    langfuse_handler: Optional[Any],
+    langfuse_handler: Optional[CallbackHandler],
     available_file_path: Optional[str] = None,
 ) -> AgentResponse:
     compiled_graph_and_config = build_agent_graph_and_config(langfuse_handler)

@@ -1,13 +1,14 @@
 import os
-from typing import Any, Optional
+from typing import Optional
 
 from dotenv import load_dotenv
 from langfuse import get_client
+from langfuse.langchain import CallbackHandler
 
 from agent.invoke_agent_with_user_message import invoke_agent_with_user_message
 
 
-def _create_langfuse_handler() -> Optional[Any]:
+def _create_langfuse_handler() -> Optional[CallbackHandler]:
     """
     Create a Langfuse callback handler if USE_LANGFUSE is enabled.
 
@@ -17,12 +18,10 @@ def _create_langfuse_handler() -> Optional[Any]:
     if os.environ.get("USE_LANGFUSE") != "1":
         return None
 
-    from langfuse.langchain import CallbackHandler
-
     return CallbackHandler()
 
 
-def run_with_custom_user_message(user_message: str) -> None:
+def run_with_custom_user_message(user_message: str):
     load_dotenv()
 
     langfuse_handler = _create_langfuse_handler()
