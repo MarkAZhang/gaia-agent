@@ -41,7 +41,9 @@ def run_agent_for_dataset_item_task(*, item: DatasetItem):
     print("Running agent for task_id:", input["task_id"])
 
     return invoke_agent_with_user_message(
-        input["question"], langfuse_handler=langfuse_handler
+        input["question"],
+        langfuse_handler=langfuse_handler,
+        available_file_path=input.get("file_path") or None,
     )
 
 

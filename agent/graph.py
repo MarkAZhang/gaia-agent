@@ -7,15 +7,10 @@ from agent.nodes.check_and_get_final_answer import check_and_get_final_answer
 from agent.nodes.llm_call import llm_call
 from agent.nodes.return_llm_refusal import return_llm_refusal
 from agent.nodes.return_llm_tool_not_available import return_llm_tool_not_available
-from tools.execute_code import execute_code_file, execute_code_snippet
-from tools.web_search import create_web_search
 from langgraph.graph.state import CompiledStateGraph
 
 
-def build_graph(tools=None) -> CompiledStateGraph:
-    if tools is None:
-        tools = [create_web_search(), execute_code_snippet, execute_code_file]
-
+def build_graph(tools) -> CompiledStateGraph:
     graph = StateGraph(MessagesState)
     graph.add_node("llm_call", llm_call)
     graph.add_node("tools", ToolNode(tools))
