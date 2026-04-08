@@ -1,3 +1,4 @@
+from langchain_core.tools import BaseTool
 from langgraph.graph import StateGraph, MessagesState, START, END
 from langgraph.prebuilt import ToolNode
 
@@ -10,7 +11,7 @@ from agent.nodes.return_llm_tool_not_available import return_llm_tool_not_availa
 from langgraph.graph.state import CompiledStateGraph
 
 
-def build_graph(tools) -> CompiledStateGraph:
+def build_graph(tools: list[BaseTool]) -> CompiledStateGraph:
     graph = StateGraph(MessagesState)
     graph.add_node("llm_call", llm_call)
     graph.add_node("tools", ToolNode(tools))

@@ -1,9 +1,11 @@
+from typing import Any
+
 from langfuse import Evaluation
 
 from agent.agent_response import AgentResponse
 
 
-def input_tokens_evaluator(*, output, **kwargs):
+def input_tokens_evaluator(*, output: Any, **kwargs: Any) -> Evaluation:
     """Evaluator that reports the total input tokens used."""
     if not isinstance(output, AgentResponse):
         return Evaluation(name="input_tokens", value=0, comment="No AgentResponse")
@@ -15,7 +17,7 @@ def input_tokens_evaluator(*, output, **kwargs):
     )
 
 
-def output_tokens_evaluator(*, output, **kwargs):
+def output_tokens_evaluator(*, output: Any, **kwargs: Any) -> Evaluation:
     """Evaluator that reports the total output tokens used."""
     if not isinstance(output, AgentResponse):
         return Evaluation(name="output_tokens", value=0, comment="No AgentResponse")

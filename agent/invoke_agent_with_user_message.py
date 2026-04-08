@@ -1,10 +1,11 @@
 from dataclasses import dataclass
 import time
-from typing import Optional
+from typing import Any, Optional
 
 from langchain_anthropic import ChatAnthropic
-from langchain_core.messages import AIMessage, ToolMessage
+from langchain_core.messages import AIMessage, BaseMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
+from langchain_core.tools import BaseTool
 
 from agent.agent_response import AgentResponse, AgentRunMetrics
 from agent.deps import AgentDeps
@@ -35,7 +36,7 @@ def build_system_prompt(
     )
 
 
-def _compute_metrics(messages):
+def _compute_metrics(messages: list[BaseMessage]) -> tuple[int, int, int]:
     """Extract token usage and turn counts from graph result messages."""
     input_tokens = 0
     output_tokens = 0
@@ -53,7 +54,7 @@ def _compute_metrics(messages):
     return input_tokens, output_tokens, total_turns
 
 
-def _get_tools():
+def _get_tools() -> list[BaseTool]:
     return [create_web_search(), execute_code_snippet, execute_code_file]
 
 
@@ -63,7 +64,9 @@ class AgentCompiledGraphAndConfig:
     config: RunnableConfig
 
 
-def build_agent_graph_and_config(langfuse_handler) -> AgentCompiledGraphAndConfig:
+def build_agent_graph_and_config(
+    langfuse_handler: Optional[Any],
+) -> AgentCompiledGraphAndConfig:
     tools = _get_tools()
     llm = ChatAnthropic(model="claude-opus-4-6").bind_tools(tools)
     config = RunnableConfig(
@@ -74,8 +77,8 @@ def build_agent_graph_and_config(langfuse_handler) -> AgentCompiledGraphAndConfi
 
 
 def invoke_agent_with_user_message(
-    input_str,
-    langfuse_handler,
+    input_str: str,
+    langfuse_handler: Optional[Any],
     available_file_path: Optional[str] = None,
 ) -> AgentResponse:
     compiled_graph_and_config = build_agent_graph_and_config(langfuse_handler)

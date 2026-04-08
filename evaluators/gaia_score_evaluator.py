@@ -1,16 +1,20 @@
 import re
+from typing import Any
+
 from langfuse import Evaluation
 
 from agent.agent_response import AgentResponse
 
 
-def gaia_score_evaluator(*, input, output, expected_output, **kwargs):
+def gaia_score_evaluator(
+    *, input: Any, output: Any, expected_output: Any, **kwargs: Any
+) -> Evaluation:
     """
     Normalizes and compares the agent output with the GAIA ground truth.
     """
     answer = output.answer if isinstance(output, AgentResponse) else output
 
-    def normalize(text):
+    def normalize(text: Any) -> str:
         if text == "" or text is None:
             return ""
         text = str(text).lower().strip()

@@ -1,9 +1,11 @@
+from typing import Any
+
 from langfuse import Evaluation
 
 from agent.agent_response import AgentResponse
 
 
-def latency_evaluator(*, output, **kwargs):
+def latency_evaluator(*, output: Any, **kwargs: Any) -> Evaluation:
     """Evaluator that reports the task latency in seconds."""
     if not isinstance(output, AgentResponse):
         return Evaluation(name="latency_seconds", value=0, comment="No AgentResponse")
