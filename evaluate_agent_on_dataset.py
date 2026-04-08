@@ -1,5 +1,7 @@
 from typing import TypedDict
+
 from langfuse import get_client
+from agent.agent_response import AgentResponse
 from langfuse.langchain import CallbackHandler
 from langfuse.api import DatasetItem
 from agent.invoke_agent_with_user_message import invoke_agent_with_user_message
@@ -29,7 +31,7 @@ class DatasetItemInput(TypedDict):
     file_path: str
 
 
-def run_agent_for_dataset_item_task(*, item: DatasetItem):
+def run_agent_for_dataset_item_task(*, item: DatasetItem) -> AgentResponse:
     """
     Run agent for a single dataset item.
 
@@ -47,9 +49,9 @@ def run_agent_for_dataset_item_task(*, item: DatasetItem):
     )
 
 
-def evaluate_agent_on_dataset(dataset, name, description):
+def evaluate_agent_on_dataset(dataset_name: str, name: str, description: str):
     langfuse = get_client()
-    dataset = langfuse.get_dataset(dataset)
+    dataset = langfuse.get_dataset(dataset_name)
 
     dataset.run_experiment(
         name=name,
