@@ -1,8 +1,4 @@
-"""Image analysis tool powered by Gemini.
-
-Uses the Google GenAI SDK to send a local image file along with a
-question to a Gemini model and returns the model's response.
-"""
+"""Image analysis tool powered by LLMs."""
 
 from abc import ABC, abstractmethod
 
@@ -11,6 +7,10 @@ from langchain_core.tools import BaseTool, tool
 from agent_graph.file_paths import to_local_file_path
 
 
+# In order to make it easy to switch LLM models and providers, we define
+# the ImageAnalyzer implementation elsewhere in the llm_wrappers module.
+# This file has no dependency on an LLM-specific library, and does not need to change
+# if we switch LLMs.
 class BaseImageAnalyzer(ABC):
     @abstractmethod
     def answer_image_question(self, local_file_path: str, question: str) -> str:
