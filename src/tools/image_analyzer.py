@@ -18,7 +18,7 @@ class BaseImageAnalyzer(ABC):
 
 
 def create_image_analyzer_tool(analyzer: BaseImageAnalyzer) -> BaseTool:
-    """Return an ``analyze_image`` tool that uses the given Gemini *model*.
+    """Return an ``analyze_image`` tool that uses the given *analyzer*.
 
     Parameters
     ----------

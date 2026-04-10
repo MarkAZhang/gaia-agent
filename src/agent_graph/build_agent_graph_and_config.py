@@ -28,7 +28,7 @@ from tools.web_searcher import create_web_search
 IMAGE_ANALYZER_MODEL = "gemini-3.1-pro-preview"
 
 
-def _get_tools(image_analyzer_model: str) -> list[BaseTool]:
+def _get_tools() -> list[BaseTool]:
     return [
         create_web_search(),
         execute_code_snippet,
@@ -36,7 +36,7 @@ def _get_tools(image_analyzer_model: str) -> list[BaseTool]:
         parse_document,
         create_image_analyzer_tool(
             analyzer=GeminiImageAnalyzer(
-                model=image_analyzer_model,
+                model=IMAGE_ANALYZER_MODEL,
                 api_key=os.environ["GEMINI_API_KEY"],
             ),
         ),
@@ -83,14 +83,12 @@ class AgentCompiledGraphAndConfig:
 def build_agent_graph_and_config(
     langfuse_handler: Optional[CallbackHandler],
 ) -> AgentCompiledGraphAndConfig:
-    image_analyzer_model = IMAGE_ANALYZER_MODEL
-    tools = _get_tools(image_analyzer_model=image_analyzer_model)
+    tools = _get_tools()
     llm = ChatAnthropic(model="claude-opus-4-6").bind_tools(tools)
     config = RunnableConfig(
         configurable={
             "deps": AgentDependencies(
                 core_agent_model=llm,
-                image_analyzer_model=image_analyzer_model,
             )
         },
         callbacks=[langfuse_handler] if langfuse_handler else [],
