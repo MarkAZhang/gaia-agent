@@ -1,7 +1,7 @@
 [project]
-name = "gaia-agent-orchestrator"
+name = "gaia-agent"
 version = "0.1.0"
-description = "GAIA agent orchestrator using LangGraph"
+description = "GAIA agent using LangGraph"
 requires-python = ">=3.11"
 dependencies = [
     "langgraph>=0.4.1",
@@ -14,9 +14,34 @@ dependencies = [
     "docling>=2.31.0",
 ]
 
+[project.scripts]
+print-mermaid = "scripts.print_mermaid_for_agent_graph:main"
+evaluate-agent = "scripts.evaluate_agent:main"
+
 [build-system]
 requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["evaluate_agent_on_dataset"]
+
+[tool.setuptools.packages.find]
+where = ["src", "."]
+include = ["agent*", "evaluators*", "tools*", "scripts*"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+"scripts" = "scripts"
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "src"
+]
+
+[tool.uv]
+required-environments = [
+    "sys_platform == 'darwin' and platform_machine == 'x86_64'"
+]
 
 [dependency-groups]
 dev = [
