@@ -9,6 +9,7 @@ class TestInputTokensEvaluator:
     def test_returns_input_tokens_from_agent_response(self):
         agent_response = AgentResponse(
             answer="answer",
+            deobfuscation_method="none",
             metrics=AgentRunMetrics(
                 latency_seconds=1.0,
                 input_tokens=500,
@@ -31,6 +32,7 @@ class TestOutputTokensEvaluator:
     def test_returns_output_tokens_from_agent_response(self):
         agent_response = AgentResponse(
             answer="answer",
+            deobfuscation_method="none",
             metrics=AgentRunMetrics(
                 latency_seconds=1.0,
                 input_tokens=500,

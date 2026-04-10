@@ -13,6 +13,7 @@ def _make_agent_response(**overrides):
             output_tokens=0,
             total_turns=0,
         ),
+        "deobfuscation_method": "none",
     }
     defaults.update(overrides)
     return AgentResponse(**defaults)

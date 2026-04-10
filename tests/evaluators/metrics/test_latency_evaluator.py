@@ -6,6 +6,7 @@ class TestLatencyEvaluator:
     def test_returns_latency_from_agent_response(self):
         agent_response = AgentResponse(
             answer="answer",
+            deobfuscation_method="none",
             metrics=AgentRunMetrics(
                 latency_seconds=5.23,
                 input_tokens=0,

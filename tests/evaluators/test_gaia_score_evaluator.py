@@ -10,6 +10,7 @@ def _make_dataset_item_input() -> DatasetItemInput:
 def _make_agent_response(answer: str) -> AgentResponse:
     return AgentResponse(
         answer=answer,
+        deobfuscation_method="none",
         metrics=AgentRunMetrics(
             latency_seconds=1.0,
             input_tokens=10,
