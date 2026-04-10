@@ -7,6 +7,7 @@ from langfuse.langchain import CallbackHandler
 from agent_graph.agent_response import AgentResponse, AgentRunMetrics
 from agent_graph.build_agent_graph_and_config import build_agent_graph_and_config
 from agent_graph.build_system_prompt import build_system_prompt
+from agent_graph.guardrails.user_input_deobfuscator import deobfuscate_user_input
 
 
 def _compute_metrics(messages: list[BaseMessage]) -> tuple[int, int, int]:
@@ -32,6 +33,9 @@ def invoke_agent_with_user_message(
     langfuse_handler: Optional[CallbackHandler],
     available_file_path: Optional[str] = None,
 ) -> AgentResponse:
+    deobfuscation_result = deobfuscate_user_input(input_str)
+    user_message = deobfuscation_result.text
+
     compiled_graph_and_config = build_agent_graph_and_config(langfuse_handler)
     system_prompt = build_system_prompt(available_file_path)
 
@@ -40,7 +44,7 @@ def invoke_agent_with_user_message(
         {
             "messages": [
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": input_str},
+                {"role": "user", "content": user_message},
             ]
         },
         config=compiled_graph_and_config.config,
@@ -59,4 +63,5 @@ def invoke_agent_with_user_message(
             output_tokens=output_tokens,
             total_turns=total_turns,
         ),
+        deobfuscation_method=deobfuscation_result.technique,
     )

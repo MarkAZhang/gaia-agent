@@ -17,3 +17,4 @@ class AgentResponse:
 
     answer: str
     metrics: AgentRunMetrics
+    deobfuscation_method: str
