@@ -25,7 +25,7 @@ def _get_tools() -> list[BaseTool]:
     return [create_web_search(), execute_code_snippet, execute_code_file, parse_document]
 
 
-def build_graph(tools: list[BaseTool]) -> CompiledStateGraph:
+def _build_graph(tools: list[BaseTool]) -> CompiledStateGraph:
     graph = StateGraph(MessagesState)
     graph.add_node("core_agent", core_agent)
     graph.add_node("tools", ToolNode(tools))
@@ -71,4 +71,4 @@ def build_agent_graph_and_config(
         configurable={"deps": AgentDependencies(core_agent_model=llm)},
         callbacks=[langfuse_handler] if langfuse_handler else [],
     )
-    return AgentCompiledGraphAndConfig(graph=build_graph(tools=tools), config=config)
+    return AgentCompiledGraphAndConfig(graph=_build_graph(tools=tools), config=config)

@@ -1,23 +1,31 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from langchain_core.messages import AIMessage, HumanMessage
-from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
 
-from agent_graph.agent_dependencies import AgentDependencies
-from agent_graph.build_agent_graph_and_config import build_graph
+from agent_graph.build_agent_graph_and_config import build_agent_graph_and_config
 
 
 @tool
-def fake_tavily_search(query: str) -> str:
-    """A fake search tool that returns a canned response for testing."""
-    return f"Search results for: {query}"
+def fake_tool(query: str) -> str:
+    """A fake tool that returns a canned response for testing."""
+    return f"Result for: {query}"
 
 
 def _build_with_mock(mock_llm: MagicMock):
-    config = RunnableConfig(configurable={"deps": AgentDependencies(core_agent_model=mock_llm)})
-    graph = build_graph(tools=[fake_tavily_search])
-    return graph, config
+    with (
+        patch(
+            "agent_graph.build_agent_graph_and_config.ChatAnthropic"
+        ) as mock_chat_anthropic,
+        patch(
+            "agent_graph.build_agent_graph_and_config._get_tools",
+            return_value=[fake_tool],
+        ),
+    ):
+        mock_chat_anthropic.return_value.bind_tools.return_value = mock_llm
+
+        result = build_agent_graph_and_config(langfuse_handler=None)
+        return result.graph, result.config
 
 
 def test_graph_ends_when_answer_formatted_correctly():
@@ -58,7 +66,7 @@ def test_graph_calls_tool_and_loops_back():
         content="Let me search for that.",
         tool_calls=[
             {
-                "name": "fake_tavily_search",
+                "name": "fake_tool",
                 "args": {"query": "LangGraph"},
                 "id": "call_1",
             }
@@ -91,7 +99,7 @@ def test_graph_handles_multiple_tool_calls():
         content="First search.",
         tool_calls=[
             {
-                "name": "fake_tavily_search",
+                "name": "fake_tool",
                 "args": {"query": "topic a"},
                 "id": "call_1",
             }
@@ -101,7 +109,7 @@ def test_graph_handles_multiple_tool_calls():
         content="Second search.",
         tool_calls=[
             {
-                "name": "fake_tavily_search",
+                "name": "fake_tool",
                 "args": {"query": "topic b"},
                 "id": "call_2",
             }
@@ -162,7 +170,7 @@ def test_graph_tool_result_content():
         content="Searching.",
         tool_calls=[
             {
-                "name": "fake_tavily_search",
+                "name": "fake_tool",
                 "args": {"query": "test"},
                 "id": "call_1",
             }
@@ -180,4 +188,4 @@ def test_graph_tool_result_content():
 
     tool_messages = [m for m in result["messages"] if m.type == "tool"]
     assert len(tool_messages) == 1
-    assert "Search results for: test" in tool_messages[0].content
+    assert "Result for: test" in tool_messages[0].content
