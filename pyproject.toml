@@ -12,6 +12,7 @@ dependencies = [
     "pyyaml>=6.0.3",
     "e2b-code-interpreter>=2.6.0",
     "docling>=2.31.0",
+    "google-genai>=1.72.0",
 ]
 
 [project.scripts]

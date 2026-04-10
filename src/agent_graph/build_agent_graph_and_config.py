@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass
 from typing import Optional
 
@@ -15,14 +16,31 @@ from agent_graph.edges.should_continue import should_continue
 from agent_graph.nodes.check_and_get_final_answer import check_and_get_final_answer
 from agent_graph.nodes.core_agent import core_agent
 from agent_graph.nodes.return_llm_refusal import return_llm_refusal
-from agent_graph.nodes.return_llm_tool_not_available import return_llm_tool_not_available
+from agent_graph.nodes.return_llm_tool_not_available import (
+    return_llm_tool_not_available,
+)
 from tools.code_runner import execute_code_file, execute_code_snippet
 from tools.document_parser import parse_document
+from llm_wrappers.gemini_image_analyzer import GeminiImageAnalyzer
+from tools.image_analyzer import create_image_analyzer_tool
 from tools.web_searcher import create_web_search
+
+IMAGE_ANALYZER_MODEL = "gemini-3.1-pro-preview"
 
 
 def _get_tools() -> list[BaseTool]:
-    return [create_web_search(), execute_code_snippet, execute_code_file, parse_document]
+    return [
+        create_web_search(),
+        execute_code_snippet,
+        execute_code_file,
+        parse_document,
+        create_image_analyzer_tool(
+            analyzer=GeminiImageAnalyzer(
+                model=IMAGE_ANALYZER_MODEL,
+                api_key=os.environ["GEMINI_API_KEY"],
+            ),
+        ),
+    ]
 
 
 def _build_graph(tools: list[BaseTool]) -> CompiledStateGraph:
@@ -68,7 +86,11 @@ def build_agent_graph_and_config(
     tools = _get_tools()
     llm = ChatAnthropic(model="claude-opus-4-6").bind_tools(tools)
     config = RunnableConfig(
-        configurable={"deps": AgentDependencies(core_agent_model=llm)},
+        configurable={
+            "deps": AgentDependencies(
+                core_agent_model=llm,
+            )
+        },
         callbacks=[langfuse_handler] if langfuse_handler else [],
     )
     return AgentCompiledGraphAndConfig(graph=_build_graph(tools=tools), config=config)

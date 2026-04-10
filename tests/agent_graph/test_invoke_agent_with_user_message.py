@@ -83,13 +83,20 @@ class TestComputeMetrics:
 
 
 class TestInvokeAgentWithUserMessage:
+    @patch("agent_graph.build_agent_graph_and_config.os.environ", {"GEMINI_API_KEY": "fake"})
+    @patch("agent_graph.build_agent_graph_and_config.create_image_analyzer_tool")
     @patch("agent_graph.build_agent_graph_and_config._build_graph")
     @patch("agent_graph.build_agent_graph_and_config.ChatAnthropic")
     @patch("agent_graph.build_agent_graph_and_config.create_web_search")
     def test_returns_agent_response(
-        self, mock_create_web_search, mock_chat_anthropic, mock__build_graph
+        self,
+        mock_create_web_search,
+        mock_chat_anthropic,
+        mock__build_graph,
+        mock_create_image_analyzer_tool,
     ):
         mock_create_web_search.return_value = MagicMock()
+        mock_create_image_analyzer_tool.return_value = MagicMock()
         mock_chat_anthropic.return_value.bind_tools.return_value = MagicMock()
 
         mock_graph = MagicMock()
@@ -114,13 +121,20 @@ class TestInvokeAgentWithUserMessage:
         assert result.metrics.total_turns == 1
         assert result.metrics.latency_seconds >= 0
 
+    @patch("agent_graph.build_agent_graph_and_config.os.environ", {"GEMINI_API_KEY": "fake"})
+    @patch("agent_graph.build_agent_graph_and_config.create_image_analyzer_tool")
     @patch("agent_graph.build_agent_graph_and_config._build_graph")
     @patch("agent_graph.build_agent_graph_and_config.ChatAnthropic")
     @patch("agent_graph.build_agent_graph_and_config.create_web_search")
     def test_returns_no_answer_when_messages_empty(
-        self, mock_create_web_search, mock_chat_anthropic, mock__build_graph
+        self,
+        mock_create_web_search,
+        mock_chat_anthropic,
+        mock__build_graph,
+        mock_create_image_analyzer_tool,
     ):
         mock_create_web_search.return_value = MagicMock()
+        mock_create_image_analyzer_tool.return_value = MagicMock()
         mock_chat_anthropic.return_value.bind_tools.return_value = MagicMock()
 
         mock_graph = MagicMock()
@@ -134,13 +148,20 @@ class TestInvokeAgentWithUserMessage:
         assert result.metrics.output_tokens == 0
         assert result.metrics.total_turns == 0
 
+    @patch("agent_graph.build_agent_graph_and_config.os.environ", {"GEMINI_API_KEY": "fake"})
+    @patch("agent_graph.build_agent_graph_and_config.create_image_analyzer_tool")
     @patch("agent_graph.build_agent_graph_and_config._build_graph")
     @patch("agent_graph.build_agent_graph_and_config.ChatAnthropic")
     @patch("agent_graph.build_agent_graph_and_config.create_web_search")
     def test_passes_user_message_to_graph(
-        self, mock_create_web_search, mock_chat_anthropic, mock__build_graph
+        self,
+        mock_create_web_search,
+        mock_chat_anthropic,
+        mock__build_graph,
+        mock_create_image_analyzer_tool,
     ):
         mock_create_web_search.return_value = MagicMock()
+        mock_create_image_analyzer_tool.return_value = MagicMock()
         mock_chat_anthropic.return_value.bind_tools.return_value = MagicMock()
 
         mock_graph = MagicMock()
@@ -155,13 +176,20 @@ class TestInvokeAgentWithUserMessage:
         assert "Provided file path:" not in messages[0]["content"]
         assert messages[-1] == {"role": "user", "content": "test question"}
 
+    @patch("agent_graph.build_agent_graph_and_config.os.environ", {"GEMINI_API_KEY": "fake"})
+    @patch("agent_graph.build_agent_graph_and_config.create_image_analyzer_tool")
     @patch("agent_graph.build_agent_graph_and_config._build_graph")
     @patch("agent_graph.build_agent_graph_and_config.ChatAnthropic")
     @patch("agent_graph.build_agent_graph_and_config.create_web_search")
     def test_includes_langfuse_handler_in_callbacks(
-        self, mock_create_web_search, mock_chat_anthropic, mock__build_graph
+        self,
+        mock_create_web_search,
+        mock_chat_anthropic,
+        mock__build_graph,
+        mock_create_image_analyzer_tool,
     ):
         mock_create_web_search.return_value = MagicMock()
+        mock_create_image_analyzer_tool.return_value = MagicMock()
         mock_chat_anthropic.return_value.bind_tools.return_value = MagicMock()
 
         mock_graph = MagicMock()
@@ -175,13 +203,20 @@ class TestInvokeAgentWithUserMessage:
         config = call_args[1]["config"]
         assert mock_handler in config["callbacks"]
 
+    @patch("agent_graph.build_agent_graph_and_config.os.environ", {"GEMINI_API_KEY": "fake"})
+    @patch("agent_graph.build_agent_graph_and_config.create_image_analyzer_tool")
     @patch("agent_graph.build_agent_graph_and_config._build_graph")
     @patch("agent_graph.build_agent_graph_and_config.ChatAnthropic")
     @patch("agent_graph.build_agent_graph_and_config.create_web_search")
     def test_no_callbacks_when_langfuse_handler_is_none(
-        self, mock_create_web_search, mock_chat_anthropic, mock__build_graph
+        self,
+        mock_create_web_search,
+        mock_chat_anthropic,
+        mock__build_graph,
+        mock_create_image_analyzer_tool,
     ):
         mock_create_web_search.return_value = MagicMock()
+        mock_create_image_analyzer_tool.return_value = MagicMock()
         mock_chat_anthropic.return_value.bind_tools.return_value = MagicMock()
 
         mock_graph = MagicMock()
@@ -194,14 +229,22 @@ class TestInvokeAgentWithUserMessage:
         config = call_args[1]["config"]
         assert config["callbacks"] == []
 
+    @patch("agent_graph.build_agent_graph_and_config.os.environ", {"GEMINI_API_KEY": "fake"})
+    @patch("agent_graph.build_agent_graph_and_config.create_image_analyzer_tool")
     @patch("agent_graph.build_agent_graph_and_config._build_graph")
     @patch("agent_graph.build_agent_graph_and_config.ChatAnthropic")
     @patch("agent_graph.build_agent_graph_and_config.create_web_search")
     def test_builds_graph_with_tools(
-        self, mock_create_web_search, mock_chat_anthropic, mock__build_graph
+        self,
+        mock_create_web_search,
+        mock_chat_anthropic,
+        mock__build_graph,
+        mock_create_image_analyzer_tool,
     ):
         mock_create_web_search_tool = MagicMock()
         mock_create_web_search.return_value = mock_create_web_search_tool
+        mock_image_analyzer_tool = MagicMock()
+        mock_create_image_analyzer_tool.return_value = mock_image_analyzer_tool
         mock_chat_anthropic.return_value.bind_tools.return_value = MagicMock()
 
         mock_graph = MagicMock()
@@ -216,17 +259,26 @@ class TestInvokeAgentWithUserMessage:
                 execute_code_snippet,
                 execute_code_file,
                 parse_document,
+                mock_image_analyzer_tool,
             ]
         )
 
+    @patch("agent_graph.build_agent_graph_and_config.os.environ", {"GEMINI_API_KEY": "fake"})
+    @patch("agent_graph.build_agent_graph_and_config.create_image_analyzer_tool")
     @patch("agent_graph.build_agent_graph_and_config._build_graph")
     @patch("agent_graph.build_agent_graph_and_config.ChatAnthropic")
     @patch("agent_graph.build_agent_graph_and_config.create_web_search")
     def test_binds_tools_to_llm(
-        self, mock_create_web_search, mock_chat_anthropic, mock__build_graph
+        self,
+        mock_create_web_search,
+        mock_chat_anthropic,
+        mock__build_graph,
+        mock_create_image_analyzer_tool,
     ):
         mock_create_web_search_tool = MagicMock()
         mock_create_web_search.return_value = mock_create_web_search_tool
+        mock_image_analyzer_tool = MagicMock()
+        mock_create_image_analyzer_tool.return_value = mock_image_analyzer_tool
         mock_llm_instance = MagicMock()
         mock_chat_anthropic.return_value = mock_llm_instance
 
@@ -242,16 +294,24 @@ class TestInvokeAgentWithUserMessage:
                 execute_code_snippet,
                 execute_code_file,
                 parse_document,
+                mock_image_analyzer_tool,
             ]
         )
 
+    @patch("agent_graph.build_agent_graph_and_config.os.environ", {"GEMINI_API_KEY": "fake"})
+    @patch("agent_graph.build_agent_graph_and_config.create_image_analyzer_tool")
     @patch("agent_graph.build_agent_graph_and_config._build_graph")
     @patch("agent_graph.build_agent_graph_and_config.ChatAnthropic")
     @patch("agent_graph.build_agent_graph_and_config.create_web_search")
     def test_latency_is_positive(
-        self, mock_create_web_search, mock_chat_anthropic, mock__build_graph
+        self,
+        mock_create_web_search,
+        mock_chat_anthropic,
+        mock__build_graph,
+        mock_create_image_analyzer_tool,
     ):
         mock_create_web_search.return_value = MagicMock()
+        mock_create_image_analyzer_tool.return_value = MagicMock()
         mock_chat_anthropic.return_value.bind_tools.return_value = MagicMock()
 
         mock_graph = MagicMock()
@@ -262,13 +322,20 @@ class TestInvokeAgentWithUserMessage:
 
         assert result.metrics.latency_seconds >= 0
 
+    @patch("agent_graph.build_agent_graph_and_config.os.environ", {"GEMINI_API_KEY": "fake"})
+    @patch("agent_graph.build_agent_graph_and_config.create_image_analyzer_tool")
     @patch("agent_graph.build_agent_graph_and_config._build_graph")
     @patch("agent_graph.build_agent_graph_and_config.ChatAnthropic")
     @patch("agent_graph.build_agent_graph_and_config.create_web_search")
     def test_file_path_added_to_system_prompt(
-        self, mock_create_web_search, mock_chat_anthropic, mock__build_graph
+        self,
+        mock_create_web_search,
+        mock_chat_anthropic,
+        mock__build_graph,
+        mock_create_image_analyzer_tool,
     ):
         mock_create_web_search.return_value = MagicMock()
+        mock_create_image_analyzer_tool.return_value = MagicMock()
         mock_chat_anthropic.return_value.bind_tools.return_value = MagicMock()
         mock_graph = MagicMock()
         mock__build_graph.return_value = mock_graph
