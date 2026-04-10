@@ -16,7 +16,7 @@ dependencies = [
 
 [project.scripts]
 print-mermaid = "scripts.print_mermaid_for_agent_graph:main"
-evaluate-agent = "scripts.evaluate_agent:main"
+evaluate = "scripts.evaluate_agent:main"
 
 [build-system]
 requires = ["setuptools>=68.0"]
@@ -40,7 +40,7 @@ pythonpath = [
 
 [tool.uv]
 required-environments = [
-    "sys_platform == 'darwin' and platform_machine == 'x86_64'"
+    "sys_platform == 'darwin' and platform_machine == 'arm64'"
 ]
 
 [dependency-groups]
