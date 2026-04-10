@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from langfuse import get_client
 from langfuse.langchain import CallbackHandler
 
-from agent.invoke_agent_with_user_message import invoke_agent_with_user_message
+from agent_graph.invoke_agent_with_user_message import invoke_agent_with_user_message
 
 
 def _create_langfuse_handler() -> Optional[CallbackHandler]:

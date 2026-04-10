@@ -17,11 +17,11 @@ def _patch_sandbox(execution):
     cm = MagicMock()
     cm.__enter__.return_value = sandbox_instance
     cm.__exit__.return_value = False
-    return patch("tools.execute_code.Sandbox.create", return_value=cm), sandbox_instance
+    return patch("tools.code_runner.Sandbox.create", return_value=cm), sandbox_instance
 
 
 def test_execute_code_snippet_default_language_python():
-    from tools.execute_code import execute_code_snippet
+    from tools.code_runner import execute_code_snippet
 
     execution = _mock_execution(stdout=["hello\n"])
     patcher, sandbox = _patch_sandbox(execution)
@@ -34,7 +34,7 @@ def test_execute_code_snippet_default_language_python():
 
 
 def test_execute_code_snippet_custom_language():
-    from tools.execute_code import execute_code_snippet
+    from tools.code_runner import execute_code_snippet
 
     execution = _mock_execution(
         results=[SimpleNamespace(text="42")],
@@ -53,7 +53,7 @@ def test_execute_code_snippet_custom_language():
 
 
 def test_execute_code_snippet_reports_error_and_stderr():
-    from tools.execute_code import execute_code_snippet
+    from tools.code_runner import execute_code_snippet
 
     execution = _mock_execution(
         stderr=["bad\n"],
@@ -69,7 +69,7 @@ def test_execute_code_snippet_reports_error_and_stderr():
 
 
 def test_execute_code_snippet_no_output():
-    from tools.execute_code import execute_code_snippet
+    from tools.code_runner import execute_code_snippet
 
     patcher, _ = _patch_sandbox(_mock_execution())
     with patcher:
@@ -80,11 +80,11 @@ def test_execute_code_snippet_no_output():
 
 
 def test_execute_code_file_reads_and_runs_file():
-    from tools.execute_code import execute_code_file
+    from tools.code_runner import execute_code_file
 
     execution = _mock_execution(stdout=["ok"])
     patcher, sandbox = _patch_sandbox(execution)
-    with patcher, patch("tools.execute_code.Path") as mock_path:
+    with patcher, patch("tools.code_runner.Path") as mock_path:
         mock_path.return_value.read_text.return_value = "print('ok')"
         result = execute_code_file.invoke(
             {"file_path": "2023/validation/script.py"}
@@ -101,10 +101,10 @@ def test_execute_code_file_reads_and_runs_file():
 
 
 def test_execute_code_file_custom_language():
-    from tools.execute_code import execute_code_file
+    from tools.code_runner import execute_code_file
 
     patcher, sandbox = _patch_sandbox(_mock_execution(stdout=["hi"]))
-    with patcher, patch("tools.execute_code.Path") as mock_path:
+    with patcher, patch("tools.code_runner.Path") as mock_path:
         mock_path.return_value.read_text.return_value = "echo hi"
         execute_code_file.invoke(
             {"file_path": "run.sh", "language": "bash"}

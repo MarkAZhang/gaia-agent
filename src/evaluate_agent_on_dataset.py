@@ -1,10 +1,10 @@
 from typing import TypedDict
 
 from langfuse import get_client
-from agent.agent_response import AgentResponse
+from agent_graph.agent_response import AgentResponse
 from langfuse.langchain import CallbackHandler
 from langfuse.api import DatasetItem
-from agent.invoke_agent_with_user_message import invoke_agent_with_user_message
+from agent_graph.invoke_agent_with_user_message import invoke_agent_with_user_message
 
 from evaluators.gaia_score_evaluator import gaia_score_evaluator
 from evaluators.metrics.latency_evaluator import latency_evaluator

@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock, patch
 
-from agent.agent_response import AgentResponse, AgentRunMetrics
+from agent_graph.agent_response import AgentResponse, AgentRunMetrics
 from evaluate_agent_on_dataset import run_agent_for_dataset_item_task
 
 

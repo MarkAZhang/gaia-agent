@@ -7,7 +7,7 @@ etc.) to Markdown using Docling's DocumentConverter.
 from docling.document_converter import DocumentConverter
 from langchain_core.tools import tool
 
-from agent.file_paths import to_local_file_path
+from agent_graph.file_paths import to_local_file_path
 
 converter = DocumentConverter()
 

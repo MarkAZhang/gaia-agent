@@ -1,6 +1,6 @@
 from langchain_core.messages import AIMessage
 
-from agent.nodes.return_llm_refusal import return_llm_refusal
+from agent_graph.nodes.return_llm_refusal import return_llm_refusal
 
 
 def test_return_llm_refusal_returns_refusal_message():

@@ -1,6 +1,6 @@
 from langgraph.graph import MessagesState
 
-from agent.prompts.get_prompt import get_prompt
+from agent_graph.prompts.get_prompt import get_prompt
 
 
 def check_and_get_final_answer(state: MessagesState) -> dict:

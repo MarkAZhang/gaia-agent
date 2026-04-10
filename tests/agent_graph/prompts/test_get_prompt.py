@@ -1,6 +1,6 @@
 import pytest
 
-from agent.prompts.get_prompt import get_prompt
+from agent_graph.prompts.get_prompt import get_prompt
 
 
 def test_get_prompt_returns_react_system_prompt():
@@ -38,7 +38,7 @@ def test_get_prompt_concatenates_nested_sections():
 
 
 def test_get_prompt_formats_with_kwargs(monkeypatch):
-    from agent.prompts import get_prompt as module
+    from agent_graph.prompts import get_prompt as module
 
     fake = {
         "greeting": "Hello {name}, welcome to {place}.",
@@ -55,7 +55,7 @@ def test_get_prompt_formats_with_kwargs(monkeypatch):
 
 
 def test_get_prompt_missing_format_key_raises(monkeypatch):
-    from agent.prompts import get_prompt as module
+    from agent_graph.prompts import get_prompt as module
 
     monkeypatch.setattr(module, "_PROMPTS", {"g": "Hello {name}"})
     with pytest.raises(KeyError):

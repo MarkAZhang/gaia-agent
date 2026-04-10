@@ -1,6 +1,6 @@
 from langchain_core.messages import AIMessage
 
-from agent.nodes.return_llm_tool_not_available import return_llm_tool_not_available
+from agent_graph.nodes.return_llm_tool_not_available import return_llm_tool_not_available
 
 
 def test_returns_tool_not_available_last_line():
