@@ -9,6 +9,7 @@ from agent.invoke_agent_with_user_message import (
     invoke_agent_with_user_message,
 )
 from tools.execute_code import execute_code_file, execute_code_snippet
+from tools.parse_document import parse_document
 
 
 class TestComputeMetrics:
@@ -220,7 +221,7 @@ class TestInvokeAgentWithUserMessage:
         invoke_agent_with_user_message("question", langfuse_handler=None)
 
         mock_build_graph.assert_called_once_with(
-            tools=[mock_tool, execute_code_snippet, execute_code_file]
+            tools=[mock_tool, execute_code_snippet, execute_code_file, parse_document]
         )
 
     @patch("agent.invoke_agent_with_user_message.build_graph")
@@ -243,7 +244,7 @@ class TestInvokeAgentWithUserMessage:
         invoke_agent_with_user_message("question", langfuse_handler=None)
 
         mock_llm_instance.bind_tools.assert_called_once_with(
-            [mock_tool, execute_code_snippet, execute_code_file]
+            [mock_tool, execute_code_snippet, execute_code_file, parse_document]
         )
 
     @patch("agent.invoke_agent_with_user_message.build_graph")
