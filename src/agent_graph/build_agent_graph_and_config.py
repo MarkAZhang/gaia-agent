@@ -23,6 +23,7 @@ from tools.code_runner import execute_code_file, execute_code_snippet
 from tools.document_parser import parse_document
 from llm_wrappers.gemini_image_analyzer import GeminiImageAnalyzer
 from tools.image_analyzer import create_image_analyzer_tool
+from tools.audio_transcriber import transcribe_audio
 from tools.web_searcher import create_web_search
 
 IMAGE_ANALYZER_MODEL = "gemini-3.1-pro-preview"
@@ -34,6 +35,7 @@ def _get_tools() -> list[BaseTool]:
         execute_code_snippet,
         execute_code_file,
         parse_document,
+        transcribe_audio,
         create_image_analyzer_tool(
             analyzer=GeminiImageAnalyzer(
                 model=IMAGE_ANALYZER_MODEL,
