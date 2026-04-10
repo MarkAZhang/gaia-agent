@@ -1,13 +1,13 @@
 from langchain_core.messages import AIMessage, HumanMessage
 from langgraph.graph import END
 
-from agent.edges.check_answer_routing import check_answer_routing
+from agent_graph.edges.check_answer_routing import check_answer_routing
 
 
 def test_routes_to_llm_call_when_last_message_is_human():
     msg = HumanMessage(content="Error: please format correctly.")
     state = {"messages": [msg]}
-    assert check_answer_routing(state) == "llm_call"
+    assert check_answer_routing(state) == "core_agent"
 
 
 def test_routes_to_end_when_last_message_is_ai():

@@ -6,7 +6,7 @@ from typing import Optional
 from e2b_code_interpreter import Sandbox
 from langchain_core.tools import tool
 
-from agent.file_paths import to_local_file_path
+from agent_graph.file_paths import to_local_file_path
 
 
 @dataclass

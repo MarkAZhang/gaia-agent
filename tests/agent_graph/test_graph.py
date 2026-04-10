@@ -4,8 +4,8 @@ from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
 
-from agent.deps import AgentDeps
-from agent.graph import build_graph
+from agent_graph.agent_dependencies import AgentDependencies
+from agent_graph.build_agent_graph_and_config import build_graph
 
 
 @tool
@@ -15,7 +15,7 @@ def fake_tavily_search(query: str) -> str:
 
 
 def _build_with_mock(mock_llm: MagicMock):
-    config = RunnableConfig(configurable={"deps": AgentDeps(llm=mock_llm)})
+    config = RunnableConfig(configurable={"deps": AgentDependencies(core_agent_model=mock_llm)})
     graph = build_graph(tools=[fake_tavily_search])
     return graph, config
 

@@ -1,4 +1,4 @@
-from agent.agent_response import AgentResponse, AgentRunMetrics
+from agent_graph.agent_response import AgentResponse, AgentRunMetrics
 from evaluators.metrics.token_usage_evaluator import (
     input_tokens_evaluator,
     output_tokens_evaluator,

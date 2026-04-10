@@ -2,14 +2,14 @@ from unittest.mock import MagicMock, patch
 
 from langchain_core.messages import AIMessage, ToolMessage
 
-from agent.agent_response import AgentResponse, AgentRunMetrics
-from agent.invoke_agent_with_user_message import (
+from agent_graph.agent_response import AgentResponse
+from agent_graph.invoke_agent_with_user_message import (
     _compute_metrics,
-    build_system_prompt,
     invoke_agent_with_user_message,
 )
-from tools.execute_code import execute_code_file, execute_code_snippet
-from tools.parse_document import parse_document
+from agent_graph.build_system_prompt import build_system_prompt
+from tools.code_runner import execute_code_file, execute_code_snippet
+from tools.document_parser import parse_document
 
 
 class TestComputeMetrics:
@@ -49,9 +49,7 @@ class TestComputeMetrics:
             response_metadata={"usage": {"input_tokens": 10, "output_tokens": 5}},
         )
         tool_msg = ToolMessage(content="tool result", tool_call_id="1")
-        input_tokens, output_tokens, total_turns = _compute_metrics(
-            [ai_msg, tool_msg]
-        )
+        input_tokens, output_tokens, total_turns = _compute_metrics([ai_msg, tool_msg])
         assert input_tokens == 10
         assert output_tokens == 5
         assert total_turns == 2
@@ -85,9 +83,9 @@ class TestComputeMetrics:
 
 
 class TestInvokeAgentWithUserMessage:
-    @patch("agent.invoke_agent_with_user_message.build_graph")
-    @patch("agent.invoke_agent_with_user_message.ChatAnthropic")
-    @patch("agent.invoke_agent_with_user_message.create_web_search")
+    @patch("agent_graph.build_agent_graph_and_config.build_graph")
+    @patch("agent_graph.build_agent_graph_and_config.ChatAnthropic")
+    @patch("agent_graph.build_agent_graph_and_config.create_web_search")
     def test_returns_agent_response(
         self, mock_create_web_search, mock_chat_anthropic, mock_build_graph
     ):
@@ -116,9 +114,9 @@ class TestInvokeAgentWithUserMessage:
         assert result.metrics.total_turns == 1
         assert result.metrics.latency_seconds >= 0
 
-    @patch("agent.invoke_agent_with_user_message.build_graph")
-    @patch("agent.invoke_agent_with_user_message.ChatAnthropic")
-    @patch("agent.invoke_agent_with_user_message.create_web_search")
+    @patch("agent_graph.build_agent_graph_and_config.build_graph")
+    @patch("agent_graph.build_agent_graph_and_config.ChatAnthropic")
+    @patch("agent_graph.build_agent_graph_and_config.create_web_search")
     def test_returns_no_answer_when_messages_empty(
         self, mock_create_web_search, mock_chat_anthropic, mock_build_graph
     ):
@@ -136,9 +134,9 @@ class TestInvokeAgentWithUserMessage:
         assert result.metrics.output_tokens == 0
         assert result.metrics.total_turns == 0
 
-    @patch("agent.invoke_agent_with_user_message.build_graph")
-    @patch("agent.invoke_agent_with_user_message.ChatAnthropic")
-    @patch("agent.invoke_agent_with_user_message.create_web_search")
+    @patch("agent_graph.build_agent_graph_and_config.build_graph")
+    @patch("agent_graph.build_agent_graph_and_config.ChatAnthropic")
+    @patch("agent_graph.build_agent_graph_and_config.create_web_search")
     def test_passes_user_message_to_graph(
         self, mock_create_web_search, mock_chat_anthropic, mock_build_graph
     ):
@@ -147,9 +145,7 @@ class TestInvokeAgentWithUserMessage:
 
         mock_graph = MagicMock()
         mock_build_graph.return_value = mock_graph
-        mock_graph.invoke.return_value = {
-            "messages": [AIMessage(content="response")]
-        }
+        mock_graph.invoke.return_value = {"messages": [AIMessage(content="response")]}
 
         invoke_agent_with_user_message("test question", langfuse_handler=None)
 
@@ -159,9 +155,9 @@ class TestInvokeAgentWithUserMessage:
         assert "Provided file path:" not in messages[0]["content"]
         assert messages[-1] == {"role": "user", "content": "test question"}
 
-    @patch("agent.invoke_agent_with_user_message.build_graph")
-    @patch("agent.invoke_agent_with_user_message.ChatAnthropic")
-    @patch("agent.invoke_agent_with_user_message.create_web_search")
+    @patch("agent_graph.build_agent_graph_and_config.build_graph")
+    @patch("agent_graph.build_agent_graph_and_config.ChatAnthropic")
+    @patch("agent_graph.build_agent_graph_and_config.create_web_search")
     def test_includes_langfuse_handler_in_callbacks(
         self, mock_create_web_search, mock_chat_anthropic, mock_build_graph
     ):
@@ -170,9 +166,7 @@ class TestInvokeAgentWithUserMessage:
 
         mock_graph = MagicMock()
         mock_build_graph.return_value = mock_graph
-        mock_graph.invoke.return_value = {
-            "messages": [AIMessage(content="response")]
-        }
+        mock_graph.invoke.return_value = {"messages": [AIMessage(content="response")]}
 
         mock_handler = MagicMock()
         invoke_agent_with_user_message("question", langfuse_handler=mock_handler)
@@ -181,9 +175,9 @@ class TestInvokeAgentWithUserMessage:
         config = call_args[1]["config"]
         assert mock_handler in config["callbacks"]
 
-    @patch("agent.invoke_agent_with_user_message.build_graph")
-    @patch("agent.invoke_agent_with_user_message.ChatAnthropic")
-    @patch("agent.invoke_agent_with_user_message.create_web_search")
+    @patch("agent_graph.build_agent_graph_and_config.build_graph")
+    @patch("agent_graph.build_agent_graph_and_config.ChatAnthropic")
+    @patch("agent_graph.build_agent_graph_and_config.create_web_search")
     def test_no_callbacks_when_langfuse_handler_is_none(
         self, mock_create_web_search, mock_chat_anthropic, mock_build_graph
     ):
@@ -192,9 +186,7 @@ class TestInvokeAgentWithUserMessage:
 
         mock_graph = MagicMock()
         mock_build_graph.return_value = mock_graph
-        mock_graph.invoke.return_value = {
-            "messages": [AIMessage(content="response")]
-        }
+        mock_graph.invoke.return_value = {"messages": [AIMessage(content="response")]}
 
         invoke_agent_with_user_message("question", langfuse_handler=None)
 
@@ -202,54 +194,60 @@ class TestInvokeAgentWithUserMessage:
         config = call_args[1]["config"]
         assert config["callbacks"] == []
 
-    @patch("agent.invoke_agent_with_user_message.build_graph")
-    @patch("agent.invoke_agent_with_user_message.ChatAnthropic")
-    @patch("agent.invoke_agent_with_user_message.create_web_search")
+    @patch("agent_graph.build_agent_graph_and_config.build_graph")
+    @patch("agent_graph.build_agent_graph_and_config.ChatAnthropic")
+    @patch("agent_graph.build_agent_graph_and_config.create_web_search")
     def test_builds_graph_with_tools(
         self, mock_create_web_search, mock_chat_anthropic, mock_build_graph
     ):
-        mock_tool = MagicMock()
-        mock_create_web_search.return_value = mock_tool
+        mock_create_web_search_tool = MagicMock()
+        mock_create_web_search.return_value = mock_create_web_search_tool
         mock_chat_anthropic.return_value.bind_tools.return_value = MagicMock()
 
         mock_graph = MagicMock()
         mock_build_graph.return_value = mock_graph
-        mock_graph.invoke.return_value = {
-            "messages": [AIMessage(content="response")]
-        }
+        mock_graph.invoke.return_value = {"messages": [AIMessage(content="response")]}
 
         invoke_agent_with_user_message("question", langfuse_handler=None)
 
         mock_build_graph.assert_called_once_with(
-            tools=[mock_tool, execute_code_snippet, execute_code_file, parse_document]
+            tools=[
+                mock_create_web_search_tool,
+                execute_code_snippet,
+                execute_code_file,
+                parse_document,
+            ]
         )
 
-    @patch("agent.invoke_agent_with_user_message.build_graph")
-    @patch("agent.invoke_agent_with_user_message.ChatAnthropic")
-    @patch("agent.invoke_agent_with_user_message.create_web_search")
+    @patch("agent_graph.build_agent_graph_and_config.build_graph")
+    @patch("agent_graph.build_agent_graph_and_config.ChatAnthropic")
+    @patch("agent_graph.build_agent_graph_and_config.create_web_search")
     def test_binds_tools_to_llm(
         self, mock_create_web_search, mock_chat_anthropic, mock_build_graph
     ):
-        mock_tool = MagicMock()
-        mock_create_web_search.return_value = mock_tool
+        mock_create_web_search_tool = MagicMock()
+        mock_create_web_search.return_value = mock_create_web_search_tool
         mock_llm_instance = MagicMock()
         mock_chat_anthropic.return_value = mock_llm_instance
 
         mock_graph = MagicMock()
         mock_build_graph.return_value = mock_graph
-        mock_graph.invoke.return_value = {
-            "messages": [AIMessage(content="response")]
-        }
+        mock_graph.invoke.return_value = {"messages": [AIMessage(content="response")]}
 
         invoke_agent_with_user_message("question", langfuse_handler=None)
 
         mock_llm_instance.bind_tools.assert_called_once_with(
-            [mock_tool, execute_code_snippet, execute_code_file, parse_document]
+            [
+                mock_create_web_search_tool,
+                execute_code_snippet,
+                execute_code_file,
+                parse_document,
+            ]
         )
 
-    @patch("agent.invoke_agent_with_user_message.build_graph")
-    @patch("agent.invoke_agent_with_user_message.ChatAnthropic")
-    @patch("agent.invoke_agent_with_user_message.create_web_search")
+    @patch("agent_graph.build_agent_graph_and_config.build_graph")
+    @patch("agent_graph.build_agent_graph_and_config.ChatAnthropic")
+    @patch("agent_graph.build_agent_graph_and_config.create_web_search")
     def test_latency_is_positive(
         self, mock_create_web_search, mock_chat_anthropic, mock_build_graph
     ):
@@ -258,17 +256,15 @@ class TestInvokeAgentWithUserMessage:
 
         mock_graph = MagicMock()
         mock_build_graph.return_value = mock_graph
-        mock_graph.invoke.return_value = {
-            "messages": [AIMessage(content="response")]
-        }
+        mock_graph.invoke.return_value = {"messages": [AIMessage(content="response")]}
 
         result = invoke_agent_with_user_message("question", langfuse_handler=None)
 
         assert result.metrics.latency_seconds >= 0
 
-    @patch("agent.invoke_agent_with_user_message.build_graph")
-    @patch("agent.invoke_agent_with_user_message.ChatAnthropic")
-    @patch("agent.invoke_agent_with_user_message.create_web_search")
+    @patch("agent_graph.build_agent_graph_and_config.build_graph")
+    @patch("agent_graph.build_agent_graph_and_config.ChatAnthropic")
+    @patch("agent_graph.build_agent_graph_and_config.create_web_search")
     def test_file_path_added_to_system_prompt(
         self, mock_create_web_search, mock_chat_anthropic, mock_build_graph
     ):
@@ -276,9 +272,7 @@ class TestInvokeAgentWithUserMessage:
         mock_chat_anthropic.return_value.bind_tools.return_value = MagicMock()
         mock_graph = MagicMock()
         mock_build_graph.return_value = mock_graph
-        mock_graph.invoke.return_value = {
-            "messages": [AIMessage(content="response")]
-        }
+        mock_graph.invoke.return_value = {"messages": [AIMessage(content="response")]}
 
         invoke_agent_with_user_message(
             "question",

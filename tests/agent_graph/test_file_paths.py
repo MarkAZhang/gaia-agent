@@ -1,4 +1,4 @@
-from agent.file_paths import to_local_file_path
+from agent_graph.file_paths import to_local_file_path
 
 
 def test_relative_agent_path_is_resolved_under_gaia_files_root():

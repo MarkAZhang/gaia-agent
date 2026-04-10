@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Dict, Union
 
 from langfuse import Evaluation
 
-from agent.agent_response import AgentResponse
+from agent_graph.agent_response import AgentResponse
 
 if TYPE_CHECKING:
     from evaluate_agent_on_dataset import DatasetItemInput

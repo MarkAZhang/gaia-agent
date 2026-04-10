@@ -1,6 +1,6 @@
 from langchain_core.messages import AIMessage
 
-from agent.edges.should_continue import should_continue
+from agent_graph.edges.should_continue import should_continue
 
 
 def test_should_continue_returns_tools_when_tool_calls_present():

@@ -1,6 +1,6 @@
 from langchain_core.messages import AIMessage
 
-from agent.nodes.check_and_get_final_answer import check_and_get_final_answer
+from agent_graph.nodes.check_and_get_final_answer import check_and_get_final_answer
 
 
 def test_extracts_answer_when_last_line_has_ans_prefix():

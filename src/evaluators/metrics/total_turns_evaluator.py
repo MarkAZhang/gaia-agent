@@ -2,7 +2,7 @@ from typing import Any, Dict, Union
 
 from langfuse import Evaluation
 
-from agent.agent_response import AgentResponse
+from agent_graph.agent_response import AgentResponse
 
 
 def total_turns_evaluator(

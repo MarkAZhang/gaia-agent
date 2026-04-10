@@ -1,4 +1,4 @@
-from agent.agent_response import AgentResponse, AgentRunMetrics
+from agent_graph.agent_response import AgentResponse, AgentRunMetrics
 from evaluate_agent_on_dataset import DatasetItemInput
 from evaluators.gaia_score_evaluator import gaia_score_evaluator
 

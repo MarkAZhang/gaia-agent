@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 
-from agent.invoke_agent_with_user_message import build_agent_graph_and_config
+from agent_graph.build_agent_graph_and_config import build_agent_graph_and_config
 
 
 def main():
