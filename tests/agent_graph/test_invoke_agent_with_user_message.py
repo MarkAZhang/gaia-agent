@@ -8,6 +8,7 @@ from agent_graph.invoke_agent_with_user_message import (
     invoke_agent_with_user_message,
 )
 from agent_graph.build_system_prompt import build_system_prompt
+from tools.audio_transcriber import transcribe_audio
 from tools.code_runner import execute_code_file, execute_code_snippet
 from tools.document_parser import parse_document
 
@@ -259,6 +260,7 @@ class TestInvokeAgentWithUserMessage:
                 execute_code_snippet,
                 execute_code_file,
                 parse_document,
+                transcribe_audio,
                 mock_image_analyzer_tool,
             ]
         )
@@ -294,6 +296,7 @@ class TestInvokeAgentWithUserMessage:
                 execute_code_snippet,
                 execute_code_file,
                 parse_document,
+                transcribe_audio,
                 mock_image_analyzer_tool,
             ]
         )
