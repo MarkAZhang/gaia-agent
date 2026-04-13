@@ -83,6 +83,7 @@ class TestComputeMetrics:
         assert total_turns == 3  # 2 AI + 1 Tool; Human not counted
 
 
+@patch("agent_graph.invoke_agent_with_user_message.shutdown_tools")
 class TestInvokeAgentWithUserMessage:
     @patch("agent_graph.build_agent_graph_and_config.os.environ", {"GEMINI_API_KEY": "fake"})
     @patch("agent_graph.build_agent_graph_and_config.create_image_analyzer_tool")
@@ -95,6 +96,7 @@ class TestInvokeAgentWithUserMessage:
         mock_chat_anthropic,
         mock__build_graph,
         mock_create_image_analyzer_tool,
+        _mock_shutdown_tools,
     ):
         mock_create_web_search.return_value = MagicMock()
         mock_create_image_analyzer_tool.return_value = MagicMock()
@@ -133,6 +135,7 @@ class TestInvokeAgentWithUserMessage:
         mock_chat_anthropic,
         mock__build_graph,
         mock_create_image_analyzer_tool,
+        _mock_shutdown_tools,
     ):
         mock_create_web_search.return_value = MagicMock()
         mock_create_image_analyzer_tool.return_value = MagicMock()
@@ -160,6 +163,7 @@ class TestInvokeAgentWithUserMessage:
         mock_chat_anthropic,
         mock__build_graph,
         mock_create_image_analyzer_tool,
+        _mock_shutdown_tools,
     ):
         mock_create_web_search.return_value = MagicMock()
         mock_create_image_analyzer_tool.return_value = MagicMock()
@@ -188,6 +192,7 @@ class TestInvokeAgentWithUserMessage:
         mock_chat_anthropic,
         mock__build_graph,
         mock_create_image_analyzer_tool,
+        _mock_shutdown_tools,
     ):
         mock_create_web_search.return_value = MagicMock()
         mock_create_image_analyzer_tool.return_value = MagicMock()
@@ -215,6 +220,7 @@ class TestInvokeAgentWithUserMessage:
         mock_chat_anthropic,
         mock__build_graph,
         mock_create_image_analyzer_tool,
+        _mock_shutdown_tools,
     ):
         mock_create_web_search.return_value = MagicMock()
         mock_create_image_analyzer_tool.return_value = MagicMock()
@@ -241,6 +247,7 @@ class TestInvokeAgentWithUserMessage:
         mock_chat_anthropic,
         mock__build_graph,
         mock_create_image_analyzer_tool,
+        _mock_shutdown_tools,
     ):
         mock_create_web_search_tool = MagicMock()
         mock_create_web_search.return_value = mock_create_web_search_tool
@@ -276,6 +283,7 @@ class TestInvokeAgentWithUserMessage:
         mock_chat_anthropic,
         mock__build_graph,
         mock_create_image_analyzer_tool,
+        _mock_shutdown_tools,
     ):
         mock_create_web_search_tool = MagicMock()
         mock_create_web_search.return_value = mock_create_web_search_tool
@@ -312,6 +320,7 @@ class TestInvokeAgentWithUserMessage:
         mock_chat_anthropic,
         mock__build_graph,
         mock_create_image_analyzer_tool,
+        _mock_shutdown_tools,
     ):
         mock_create_web_search.return_value = MagicMock()
         mock_create_image_analyzer_tool.return_value = MagicMock()
@@ -336,6 +345,7 @@ class TestInvokeAgentWithUserMessage:
         mock_chat_anthropic,
         mock__build_graph,
         mock_create_image_analyzer_tool,
+        _mock_shutdown_tools,
     ):
         mock_create_web_search.return_value = MagicMock()
         mock_create_image_analyzer_tool.return_value = MagicMock()

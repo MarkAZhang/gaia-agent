@@ -3,10 +3,10 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Optional
 
-from e2b_code_interpreter import Sandbox
 from langchain_core.tools import tool
 
 from agent_graph.file_paths import to_local_file_path
+from tools.code_runner.sandbox import get_sandbox
 from tools.tool_response import ToolError, ToolSuccess
 
 
@@ -22,8 +22,8 @@ class CodeExecutionResult:
 
 
 def _run_in_sandbox(code: str, language: Optional[str]) -> str:
-    with Sandbox.create() as sandbox:
-        execution = sandbox.run_code(code, language=language or "python")
+    sandbox = get_sandbox()
+    execution = sandbox.run_code(code, language=language or "python")
 
     result = CodeExecutionResult()
     if execution.logs.stdout:
@@ -42,12 +42,15 @@ def _run_in_sandbox(code: str, language: Optional[str]) -> str:
 def execute_code_snippet(
     snippet: str, language: Optional[str] = "python"
 ) -> ToolSuccess | ToolError:
-    """Execute a code snippet in a secure E2B sandbox and return its output.
+    """Execute a code snippet in a secure, persistent E2B sandbox and return its output.
 
     Use this when you need to run a short piece of code to compute a result,
     test logic, or process data. Defaults to Python; pass `language` to use
     another supported language (e.g. "javascript", "r", "bash"). Returns a
     JSON string with stdout, stderr, error, and results fields.
+
+    Note that this sandbox is persistent across multiple calls to the tool, so
+    packages you install will be available in subsequent calls.
 
     Returns a ToolSuccess with a ``response`` field containing the JSON result,
     or a ToolError with an ``error`` field if something goes wrong.
@@ -62,7 +65,7 @@ def execute_code_snippet(
 def execute_code_file(
     file_path: str, language: Optional[str] = "python"
 ) -> ToolSuccess | ToolError:
-    """Execute a local code file in a secure E2B sandbox and return its output.
+    """Execute a local code file in a secure, persistent E2B sandbox and return its output.
 
     Provide an agent-facing file path (for example the one listed under
     "Provided file path" in the system prompt). The tool resolves it
@@ -70,6 +73,9 @@ def execute_code_file(
     in the sandbox. Defaults to Python; pass `language` to use another
     supported language (e.g. "javascript", "r", "bash"). Returns a JSON
     string with stdout, stderr, error, and results fields.
+
+    Note that this sandbox is persistent across multiple calls to the tool, so
+    packages you install will be available in subsequent calls.
 
     Returns a ToolSuccess with a ``response`` field containing the JSON result,
     or a ToolError with an ``error`` field if something goes wrong.
