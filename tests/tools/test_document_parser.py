@@ -1,8 +1,10 @@
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
+from tools.tool_response import ToolError, ToolSuccess
 
-def test_parse_document_converts_and_returns_markdown():
+
+def test_parse_document_converts_and_returns_tool_success():
     mock_document = MagicMock()
     mock_document.export_to_markdown.return_value = "# Title\n\nSome content"
     mock_result = SimpleNamespace(document=mock_document)
@@ -16,7 +18,8 @@ def test_parse_document_converts_and_returns_markdown():
     mock_converter.convert.assert_called_once_with(
         ".gaia-questions/files/2023/validation/doc.pdf"
     )
-    assert result == "# Title\n\nSome content"
+    assert isinstance(result, ToolSuccess)
+    assert result.response == "# Title\n\nSome content"
 
 
 def test_parse_document_resolves_absolute_path():
@@ -51,7 +54,7 @@ def test_parse_document_resolves_already_rooted_path():
     )
 
 
-def test_parse_document_returns_empty_string_for_empty_document():
+def test_parse_document_returns_empty_response_for_empty_document():
     mock_document = MagicMock()
     mock_document.export_to_markdown.return_value = ""
     mock_result = SimpleNamespace(document=mock_document)
@@ -62,4 +65,16 @@ def test_parse_document_returns_empty_string_for_empty_document():
 
         result = parse_document.invoke({"file_path": "empty.pdf"})
 
-    assert result == ""
+    assert isinstance(result, ToolSuccess)
+    assert result.response == ""
+
+
+def test_parse_document_returns_tool_error_on_exception():
+    with patch("tools.document_parser.converter") as mock_converter:
+        mock_converter.convert.side_effect = ValueError("unsupported format")
+        from tools.document_parser import parse_document
+
+        result = parse_document.invoke({"file_path": "bad.xyz"})
+
+    assert isinstance(result, ToolError)
+    assert "unsupported format" in result.error

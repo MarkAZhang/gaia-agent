@@ -7,6 +7,7 @@ from e2b_code_interpreter import Sandbox
 from langchain_core.tools import tool
 
 from agent_graph.file_paths import to_local_file_path
+from tools.tool_response import ToolError, ToolSuccess
 
 
 @dataclass
@@ -38,19 +39,29 @@ def _run_in_sandbox(code: str, language: Optional[str]) -> str:
 
 
 @tool
-def execute_code_snippet(snippet: str, language: Optional[str] = "python") -> str:
+def execute_code_snippet(
+    snippet: str, language: Optional[str] = "python"
+) -> ToolSuccess | ToolError:
     """Execute a code snippet in a secure E2B sandbox and return its output.
 
     Use this when you need to run a short piece of code to compute a result,
     test logic, or process data. Defaults to Python; pass `language` to use
     another supported language (e.g. "javascript", "r", "bash"). Returns a
     JSON string with stdout, stderr, error, and results fields.
+
+    Returns a ToolSuccess with a ``response`` field containing the JSON result,
+    or a ToolError with an ``error`` field if something goes wrong.
     """
-    return _run_in_sandbox(snippet, language)
+    try:
+        return ToolSuccess(response=_run_in_sandbox(snippet, language))
+    except Exception as e:
+        return ToolError(error=str(e))
 
 
 @tool
-def execute_code_file(file_path: str, language: Optional[str] = "python") -> str:
+def execute_code_file(
+    file_path: str, language: Optional[str] = "python"
+) -> ToolSuccess | ToolError:
     """Execute a local code file in a secure E2B sandbox and return its output.
 
     Provide an agent-facing file path (for example the one listed under
@@ -59,7 +70,13 @@ def execute_code_file(file_path: str, language: Optional[str] = "python") -> str
     in the sandbox. Defaults to Python; pass `language` to use another
     supported language (e.g. "javascript", "r", "bash"). Returns a JSON
     string with stdout, stderr, error, and results fields.
+
+    Returns a ToolSuccess with a ``response`` field containing the JSON result,
+    or a ToolError with an ``error`` field if something goes wrong.
     """
-    local_path = to_local_file_path(file_path)
-    code = Path(local_path).read_text()
-    return _run_in_sandbox(code, language)
+    try:
+        local_path = to_local_file_path(file_path)
+        code = Path(local_path).read_text()
+        return ToolSuccess(response=_run_in_sandbox(code, language))
+    except Exception as e:
+        return ToolError(error=str(e))
