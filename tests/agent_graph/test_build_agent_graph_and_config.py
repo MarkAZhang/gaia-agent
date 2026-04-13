@@ -1,7 +1,10 @@
+import os
 from unittest.mock import MagicMock, patch
 
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.tools import tool
+
+OPENAI_ENV = {"OPENAI_API_KEY": "test-key"}
 
 from agent_graph.build_agent_graph_and_config import build_agent_graph_and_config
 
@@ -10,6 +13,16 @@ from agent_graph.build_agent_graph_and_config import build_agent_graph_and_confi
 def fake_tool(query: str) -> str:
     """A fake tool that returns a canned response for testing."""
     return f"Result for: {query}"
+
+
+def _mock_openai_response(content: str) -> MagicMock:
+    mock_message = MagicMock()
+    mock_message.content = content
+    mock_choice = MagicMock()
+    mock_choice.message = mock_message
+    mock_response = MagicMock()
+    mock_response.choices = [mock_choice]
+    return mock_response
 
 
 def _build_with_mock(mock_llm: MagicMock):
@@ -28,7 +41,13 @@ def _build_with_mock(mock_llm: MagicMock):
         return result.graph, result.config
 
 
-def test_graph_ends_when_answer_formatted_correctly():
+@patch.dict(os.environ, OPENAI_ENV)
+@patch("agent_graph.nodes.output_formatter.OpenAI")
+def test_graph_ends_when_answer_formatted_correctly(mock_openai_cls):
+    mock_client = MagicMock()
+    mock_openai_cls.return_value = mock_client
+    mock_client.chat.completions.create.return_value = _mock_openai_response("Hello!")
+
     mock_llm = MagicMock()
     mock_llm.invoke.return_value = AIMessage(content="Thinking.\nAns: Hello!")
     graph, config = _build_with_mock(mock_llm)
@@ -43,7 +62,13 @@ def test_graph_ends_when_answer_formatted_correctly():
     mock_llm.invoke.assert_called_once()
 
 
-def test_graph_retries_when_answer_not_formatted():
+@patch.dict(os.environ, OPENAI_ENV)
+@patch("agent_graph.nodes.output_formatter.OpenAI")
+def test_graph_retries_when_answer_not_formatted(mock_openai_cls):
+    mock_client = MagicMock()
+    mock_openai_cls.return_value = mock_client
+    mock_client.chat.completions.create.return_value = _mock_openai_response("42")
+
     mock_llm = MagicMock()
     bad_msg = AIMessage(content="The answer is 42.")
     good_msg = AIMessage(content="Let me fix that.\nAns: 42")
@@ -60,7 +85,15 @@ def test_graph_retries_when_answer_not_formatted():
     assert result["messages"][-1].content == "42"
 
 
-def test_graph_calls_tool_and_loops_back():
+@patch.dict(os.environ, OPENAI_ENV)
+@patch("agent_graph.nodes.output_formatter.OpenAI")
+def test_graph_calls_tool_and_loops_back(mock_openai_cls):
+    mock_client = MagicMock()
+    mock_openai_cls.return_value = mock_client
+    mock_client.chat.completions.create.return_value = _mock_openai_response(
+        "LangGraph is a framework."
+    )
+
     mock_llm = MagicMock()
     tool_call_msg = AIMessage(
         content="Let me search for that.",
@@ -93,7 +126,13 @@ def test_graph_calls_tool_and_loops_back():
     assert messages[-1].content == "LangGraph is a framework."
 
 
-def test_graph_handles_multiple_tool_calls():
+@patch.dict(os.environ, OPENAI_ENV)
+@patch("agent_graph.nodes.output_formatter.OpenAI")
+def test_graph_handles_multiple_tool_calls(mock_openai_cls):
+    mock_client = MagicMock()
+    mock_openai_cls.return_value = mock_client
+    mock_client.chat.completions.create.return_value = _mock_openai_response("Done.")
+
     mock_llm = MagicMock()
     first_tool_msg = AIMessage(
         content="First search.",
@@ -129,7 +168,13 @@ def test_graph_handles_multiple_tool_calls():
     assert result["messages"][-1].content == "Done."
 
 
-def test_graph_memory_management_removes_old_tool_messages():
+@patch.dict(os.environ, OPENAI_ENV)
+@patch("agent_graph.nodes.output_formatter.OpenAI")
+def test_graph_memory_management_removes_old_tool_messages(mock_openai_cls):
+    mock_client = MagicMock()
+    mock_openai_cls.return_value = mock_client
+    mock_client.chat.completions.create.return_value = _mock_openai_response("Done.")
+
     mock_llm = MagicMock()
     first_tool_msg = AIMessage(
         content="First search.",
@@ -204,7 +249,13 @@ def test_graph_ends_with_tool_not_available_message():
     mock_llm.invoke.assert_called_once()
 
 
-def test_graph_tool_result_content():
+@patch.dict(os.environ, OPENAI_ENV)
+@patch("agent_graph.nodes.output_formatter.OpenAI")
+def test_graph_tool_result_content(mock_openai_cls):
+    mock_client = MagicMock()
+    mock_openai_cls.return_value = mock_client
+    mock_client.chat.completions.create.return_value = _mock_openai_response("Got it.")
+
     mock_llm = MagicMock()
     tool_call_msg = AIMessage(
         content="Searching.",
