@@ -34,12 +34,12 @@ def test_graph_ends_when_answer_formatted_correctly():
     graph, config = _build_with_mock(mock_llm)
 
     result = graph.invoke(
-        {"messages": [HumanMessage(content="Hi")]},
+        {"agent_messages": [HumanMessage(content="Hi")]},
         config=config,
     )
 
-    messages = result["messages"]
-    assert messages[-1].content == "Hello!"
+    agent_messages = result["agent_messages"]
+    assert agent_messages[-1].content == "Hello!"
     mock_llm.invoke.assert_called_once()
 
 
@@ -52,12 +52,12 @@ def test_graph_retries_when_answer_not_formatted():
     graph, config = _build_with_mock(mock_llm)
 
     result = graph.invoke(
-        {"messages": [HumanMessage(content="What is 6*7?")]},
+        {"agent_messages": [HumanMessage(content="What is 6*7?")]},
         config=config,
     )
 
     assert mock_llm.invoke.call_count == 2
-    assert result["messages"][-1].content == "42"
+    assert result["agent_messages"][-1].content == "42"
 
 
 def test_graph_calls_tool_and_loops_back():
@@ -78,19 +78,20 @@ def test_graph_calls_tool_and_loops_back():
     graph, config = _build_with_mock(mock_llm)
 
     result = graph.invoke(
-        {"messages": [HumanMessage(content="Search for LangGraph")]},
+        {"agent_messages": [HumanMessage(content="Search for LangGraph")]},
         config=config,
     )
 
-    messages = result["messages"]
+    agent_messages = result["agent_messages"]
+    tool_messages = result["tool_messages"]
     assert mock_llm.invoke.call_count == 2
 
-    assert messages[0].type == "human"
-    assert messages[1].type == "ai"
-    assert messages[1].tool_calls
-    assert messages[2].type == "tool"
-    assert messages[3].type == "ai"
-    assert messages[-1].content == "LangGraph is a framework."
+    assert agent_messages[0].type == "human"
+    assert agent_messages[1].type == "ai"
+    assert agent_messages[1].tool_calls
+    assert len(tool_messages) == 1
+    assert tool_messages[0].type == "tool"
+    assert agent_messages[-1].content == "LangGraph is a framework."
 
 
 def test_graph_handles_multiple_tool_calls():
@@ -121,12 +122,12 @@ def test_graph_handles_multiple_tool_calls():
     graph, config = _build_with_mock(mock_llm)
 
     result = graph.invoke(
-        {"messages": [HumanMessage(content="Search for two topics")]},
+        {"agent_messages": [HumanMessage(content="Search for two topics")]},
         config=config,
     )
 
     assert mock_llm.invoke.call_count == 3
-    assert result["messages"][-1].content == "Done."
+    assert result["agent_messages"][-1].content == "Done."
 
 
 def test_graph_ends_with_refusal_message_when_llm_refuses():
@@ -138,12 +139,12 @@ def test_graph_ends_with_refusal_message_when_llm_refuses():
     graph, config = _build_with_mock(mock_llm)
 
     result = graph.invoke(
-        {"messages": [HumanMessage(content="Do something bad")]},
+        {"agent_messages": [HumanMessage(content="Do something bad")]},
         config=config,
     )
 
-    messages = result["messages"]
-    assert messages[-1].content == "LLM refused to continue"
+    agent_messages = result["agent_messages"]
+    assert agent_messages[-1].content == "LLM refused to continue"
     mock_llm.invoke.assert_called_once()
 
 
@@ -155,12 +156,12 @@ def test_graph_ends_with_tool_not_available_message():
     graph, config = _build_with_mock(mock_llm)
 
     result = graph.invoke(
-        {"messages": [HumanMessage(content="What is 2+2?")]},
+        {"agent_messages": [HumanMessage(content="What is 2+2?")]},
         config=config,
     )
 
-    messages = result["messages"]
-    assert messages[-1].content == "Tool not available: No calculator tool found"
+    agent_messages = result["agent_messages"]
+    assert agent_messages[-1].content == "Tool not available: No calculator tool found"
     mock_llm.invoke.assert_called_once()
 
 
@@ -182,10 +183,10 @@ def test_graph_tool_result_content():
     graph, config = _build_with_mock(mock_llm)
 
     result = graph.invoke(
-        {"messages": [HumanMessage(content="Test")]},
+        {"agent_messages": [HumanMessage(content="Test")]},
         config=config,
     )
 
-    tool_messages = [m for m in result["messages"] if m.type == "tool"]
+    tool_messages = result["tool_messages"]
     assert len(tool_messages) == 1
     assert "Result for: test" in tool_messages[0].content

@@ -103,14 +103,15 @@ class TestInvokeAgentWithUserMessage:
         mock_graph = MagicMock()
         mock__build_graph.return_value = mock_graph
         mock_graph.invoke.return_value = {
-            "messages": [
+            "agent_messages": [
                 AIMessage(
                     content="Hello world",
                     response_metadata={
                         "usage": {"input_tokens": 10, "output_tokens": 20}
                     },
                 )
-            ]
+            ],
+            "tool_messages": [],
         }
 
         result = invoke_agent_with_user_message("say hello", langfuse_handler=None)
@@ -140,7 +141,7 @@ class TestInvokeAgentWithUserMessage:
 
         mock_graph = MagicMock()
         mock__build_graph.return_value = mock_graph
-        mock_graph.invoke.return_value = {"messages": []}
+        mock_graph.invoke.return_value = {"agent_messages": [], "tool_messages": []}
 
         result = invoke_agent_with_user_message("say hello", langfuse_handler=None)
 
@@ -167,12 +168,15 @@ class TestInvokeAgentWithUserMessage:
 
         mock_graph = MagicMock()
         mock__build_graph.return_value = mock_graph
-        mock_graph.invoke.return_value = {"messages": [AIMessage(content="response")]}
+        mock_graph.invoke.return_value = {
+            "agent_messages": [AIMessage(content="response")],
+            "tool_messages": [],
+        }
 
         invoke_agent_with_user_message("test question", langfuse_handler=None)
 
         call_args = mock_graph.invoke.call_args
-        messages = call_args[0][0]["messages"]
+        messages = call_args[0][0]["agent_messages"]
         assert messages[0]["role"] == "system"
         assert "Provided file path:" not in messages[0]["content"]
         assert messages[-1] == {"role": "user", "content": "test question"}
@@ -195,7 +199,10 @@ class TestInvokeAgentWithUserMessage:
 
         mock_graph = MagicMock()
         mock__build_graph.return_value = mock_graph
-        mock_graph.invoke.return_value = {"messages": [AIMessage(content="response")]}
+        mock_graph.invoke.return_value = {
+            "agent_messages": [AIMessage(content="response")],
+            "tool_messages": [],
+        }
 
         mock_handler = MagicMock()
         invoke_agent_with_user_message("question", langfuse_handler=mock_handler)
@@ -222,7 +229,10 @@ class TestInvokeAgentWithUserMessage:
 
         mock_graph = MagicMock()
         mock__build_graph.return_value = mock_graph
-        mock_graph.invoke.return_value = {"messages": [AIMessage(content="response")]}
+        mock_graph.invoke.return_value = {
+            "agent_messages": [AIMessage(content="response")],
+            "tool_messages": [],
+        }
 
         invoke_agent_with_user_message("question", langfuse_handler=None)
 
@@ -250,7 +260,10 @@ class TestInvokeAgentWithUserMessage:
 
         mock_graph = MagicMock()
         mock__build_graph.return_value = mock_graph
-        mock_graph.invoke.return_value = {"messages": [AIMessage(content="response")]}
+        mock_graph.invoke.return_value = {
+            "agent_messages": [AIMessage(content="response")],
+            "tool_messages": [],
+        }
 
         invoke_agent_with_user_message("question", langfuse_handler=None)
 
@@ -286,7 +299,10 @@ class TestInvokeAgentWithUserMessage:
 
         mock_graph = MagicMock()
         mock__build_graph.return_value = mock_graph
-        mock_graph.invoke.return_value = {"messages": [AIMessage(content="response")]}
+        mock_graph.invoke.return_value = {
+            "agent_messages": [AIMessage(content="response")],
+            "tool_messages": [],
+        }
 
         invoke_agent_with_user_message("question", langfuse_handler=None)
 
@@ -319,7 +335,10 @@ class TestInvokeAgentWithUserMessage:
 
         mock_graph = MagicMock()
         mock__build_graph.return_value = mock_graph
-        mock_graph.invoke.return_value = {"messages": [AIMessage(content="response")]}
+        mock_graph.invoke.return_value = {
+            "agent_messages": [AIMessage(content="response")],
+            "tool_messages": [],
+        }
 
         result = invoke_agent_with_user_message("question", langfuse_handler=None)
 
@@ -342,7 +361,10 @@ class TestInvokeAgentWithUserMessage:
         mock_chat_anthropic.return_value.bind_tools.return_value = MagicMock()
         mock_graph = MagicMock()
         mock__build_graph.return_value = mock_graph
-        mock_graph.invoke.return_value = {"messages": [AIMessage(content="response")]}
+        mock_graph.invoke.return_value = {
+            "agent_messages": [AIMessage(content="response")],
+            "tool_messages": [],
+        }
 
         invoke_agent_with_user_message(
             "question",
@@ -350,7 +372,7 @@ class TestInvokeAgentWithUserMessage:
             available_file_path="2023/validation/abc.png",
         )
 
-        messages = mock_graph.invoke.call_args[0][0]["messages"]
+        messages = mock_graph.invoke.call_args[0][0]["agent_messages"]
         system_content = messages[0]["content"]
         assert "Provided file path:" in system_content
         assert "- 2023/validation/abc.png" in system_content
@@ -361,6 +383,50 @@ class TestInvokeAgentWithUserMessage:
             "Now please answer the following question:"
         )
         assert file_path_idx < conclusion_idx
+
+    @patch("agent_graph.build_agent_graph_and_config.os.environ", {"GEMINI_API_KEY": "fake"})
+    @patch("agent_graph.build_agent_graph_and_config.create_image_analyzer_tool")
+    @patch("agent_graph.build_agent_graph_and_config._build_graph")
+    @patch("agent_graph.build_agent_graph_and_config.ChatAnthropic")
+    @patch("agent_graph.build_agent_graph_and_config.create_web_search")
+    def test_metrics_include_tool_messages(
+        self,
+        mock_create_web_search,
+        mock_chat_anthropic,
+        mock__build_graph,
+        mock_create_image_analyzer_tool,
+    ):
+        mock_create_web_search.return_value = MagicMock()
+        mock_create_image_analyzer_tool.return_value = MagicMock()
+        mock_chat_anthropic.return_value.bind_tools.return_value = MagicMock()
+
+        mock_graph = MagicMock()
+        mock__build_graph.return_value = mock_graph
+        mock_graph.invoke.return_value = {
+            "agent_messages": [
+                AIMessage(
+                    content="thinking",
+                    response_metadata={
+                        "usage": {"input_tokens": 10, "output_tokens": 5}
+                    },
+                ),
+                AIMessage(
+                    content="answer",
+                    response_metadata={
+                        "usage": {"input_tokens": 20, "output_tokens": 10}
+                    },
+                ),
+            ],
+            "tool_messages": [
+                ToolMessage(content="tool result", tool_call_id="1"),
+            ],
+        }
+
+        result = invoke_agent_with_user_message("question", langfuse_handler=None)
+
+        assert result.metrics.input_tokens == 30
+        assert result.metrics.output_tokens == 15
+        assert result.metrics.total_turns == 3  # 2 AI + 1 Tool
 
 
 class TestBuildSystemPrompt:

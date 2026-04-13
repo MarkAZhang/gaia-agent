@@ -11,6 +11,11 @@ react_system_prompt:
     Always explain your reasoning before acting.
 
     When you've determined that you can provide the final answer, please provide the final answer using the formatting rules below.
+
+    Note that only the output from the last tool call will be provided to you, but all your previous messages will be provided.
+    When observing the output from the last tool call, please summarize what you've learned, so that you can access this information in the future.
+    This should include specific learnings from the tool output, as well as learnings about your approach.
+
     </intro>
 
   tool_usage: |

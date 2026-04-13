@@ -42,7 +42,7 @@ def invoke_agent_with_user_message(
     start_time = time.monotonic()
     result = compiled_graph_and_config.graph.invoke(
         {
-            "messages": [
+            "agent_messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_message},
             ]
@@ -51,9 +51,11 @@ def invoke_agent_with_user_message(
     )
     latency_seconds = time.monotonic() - start_time
 
-    messages = result["messages"]
-    final_answer = messages[-1].content if messages else "No answer found"
-    input_tokens, output_tokens, total_turns = _compute_metrics(messages)
+    agent_messages = result["agent_messages"]
+    tool_messages = result.get("tool_messages", [])
+    all_messages = agent_messages + tool_messages
+    final_answer = agent_messages[-1].content if agent_messages else "No answer found"
+    input_tokens, output_tokens, total_turns = _compute_metrics(all_messages)
 
     return AgentResponse(
         answer=final_answer,

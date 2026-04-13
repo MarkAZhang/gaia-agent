@@ -1,8 +1,8 @@
-from langgraph.graph import MessagesState
+from agent_graph.context.agent_graph_state import AgentGraphState
 
 
-def should_continue(state: MessagesState) -> str:
-    last_message = state["messages"][-1]
+def should_continue(state: AgentGraphState) -> str:
+    last_message = state["agent_messages"][-1]
     response_metadata = last_message.response_metadata or {}
     if response_metadata.get("stop_reason") == "refusal":
         return "return_llm_refusal"

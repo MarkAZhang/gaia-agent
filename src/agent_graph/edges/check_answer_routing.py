@@ -1,8 +1,10 @@
-from langgraph.graph import MessagesState, END
+from langgraph.graph import END
+
+from agent_graph.context.agent_graph_state import AgentGraphState
 
 
-def check_answer_routing(state: MessagesState) -> str:
-    last_message = state["messages"][-1]
+def check_answer_routing(state: AgentGraphState) -> str:
+    last_message = state["agent_messages"][-1]
     if last_message.type == "human":
         return "core_agent"
     return END
