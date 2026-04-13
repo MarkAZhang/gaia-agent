@@ -13,4 +13,4 @@ def check_and_get_final_answer(state: MessagesState) -> dict:
         return {"messages": [{"role": "ai", "content": final_answer}]}
 
     error_msg = get_prompt("final_answer_format_error")
-    return {"messages": [{"role": "human", "content": error_msg}]}
+    return {"messages": [{"role": "system", "content": error_msg}]}
