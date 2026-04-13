@@ -129,6 +129,46 @@ def test_graph_handles_multiple_tool_calls():
     assert result["messages"][-1].content == "Done."
 
 
+def test_graph_memory_management_removes_old_tool_messages():
+    mock_llm = MagicMock()
+    first_tool_msg = AIMessage(
+        content="First search.",
+        tool_calls=[
+            {
+                "name": "fake_tool",
+                "args": {"query": "topic a"},
+                "id": "call_1",
+            }
+        ],
+    )
+    second_tool_msg = AIMessage(
+        content="Second search.",
+        tool_calls=[
+            {
+                "name": "fake_tool",
+                "args": {"query": "topic b"},
+                "id": "call_2",
+            }
+        ],
+    )
+    final_msg = AIMessage(content="Ans: Done.")
+
+    mock_llm.invoke.side_effect = [first_tool_msg, second_tool_msg, final_msg]
+    graph, config = _build_with_mock(mock_llm)
+
+    result = graph.invoke(
+        {"messages": [HumanMessage(content="Search for two topics")]},
+        config=config,
+    )
+
+    tool_messages = [m for m in result["messages"] if m.type == "tool"]
+    assert len(tool_messages) == 2
+    # First tool message should have been replaced by memory management
+    assert tool_messages[0].content == "removed"
+    # Second tool message should still have its original content
+    assert "Result for: topic b" in tool_messages[1].content
+
+
 def test_graph_ends_with_refusal_message_when_llm_refuses():
     mock_llm = MagicMock()
     mock_llm.invoke.return_value = AIMessage(
