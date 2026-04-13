@@ -2,7 +2,19 @@ import json
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from tools.tool_response import ToolError, ToolSuccess
+
+
+@pytest.fixture(autouse=True)
+def _reset_sandbox():
+    """Reset the sandbox singleton before each test."""
+    from tools.code_runner import sandbox as sandbox_mod
+
+    sandbox_mod._sandbox = None
+    yield
+    sandbox_mod._sandbox = None
 
 
 def _mock_execution(stdout=None, stderr=None, error=None, results=None):
@@ -16,10 +28,13 @@ def _mock_execution(stdout=None, stderr=None, error=None, results=None):
 def _patch_sandbox(execution):
     sandbox_instance = MagicMock()
     sandbox_instance.run_code.return_value = execution
-    cm = MagicMock()
-    cm.__enter__.return_value = sandbox_instance
-    cm.__exit__.return_value = False
-    return patch("tools.code_runner.Sandbox.create", return_value=cm), sandbox_instance
+    return (
+        patch(
+            "tools.code_runner.sandbox.Sandbox.create",
+            return_value=sandbox_instance,
+        ),
+        sandbox_instance,
+    )
 
 
 def test_execute_code_snippet_default_language_python():
@@ -90,7 +105,7 @@ def test_execute_code_file_reads_and_runs_file():
 
     execution = _mock_execution(stdout=["ok"])
     patcher, sandbox = _patch_sandbox(execution)
-    with patcher, patch("tools.code_runner.Path") as mock_path:
+    with patcher, patch("tools.code_runner.code_runner.Path") as mock_path:
         mock_path.return_value.read_text.return_value = "print('ok')"
         result = execute_code_file.invoke(
             {"file_path": "2023/validation/script.py"}
@@ -111,7 +126,7 @@ def test_execute_code_file_custom_language():
     from tools.code_runner import execute_code_file
 
     patcher, sandbox = _patch_sandbox(_mock_execution(stdout=["hi"]))
-    with patcher, patch("tools.code_runner.Path") as mock_path:
+    with patcher, patch("tools.code_runner.code_runner.Path") as mock_path:
         mock_path.return_value.read_text.return_value = "echo hi"
         execute_code_file.invoke(
             {"file_path": "run.sh", "language": "bash"}
@@ -125,7 +140,7 @@ def test_execute_code_snippet_returns_tool_error_on_exception():
     from tools.code_runner import execute_code_snippet
 
     patcher = patch(
-        "tools.code_runner.Sandbox.create",
+        "tools.code_runner.sandbox.Sandbox.create",
         side_effect=RuntimeError("sandbox unavailable"),
     )
     with patcher:
@@ -139,7 +154,7 @@ def test_execute_code_file_returns_tool_error_on_exception():
     from tools.code_runner import execute_code_file
 
     with patch(
-        "tools.code_runner.to_local_file_path",
+        "tools.code_runner.code_runner.to_local_file_path",
         side_effect=FileNotFoundError("no such file"),
     ):
         result = execute_code_file.invoke({"file_path": "missing.py"})

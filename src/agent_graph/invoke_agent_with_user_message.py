@@ -8,6 +8,7 @@ from agent_graph.agent_response import AgentResponse, AgentRunMetrics
 from agent_graph.build_agent_graph_and_config import build_agent_graph_and_config
 from agent_graph.build_system_prompt import build_system_prompt
 from agent_graph.guardrails.user_input_deobfuscator import deobfuscate_user_input
+from tools.shutdown_tools import shutdown_tools
 
 
 def _compute_metrics(messages: list[BaseMessage]) -> tuple[int, int, int]:
@@ -40,15 +41,18 @@ def invoke_agent_with_user_message(
     system_prompt = build_system_prompt(available_file_path)
 
     start_time = time.monotonic()
-    result = compiled_graph_and_config.graph.invoke(
-        {
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_message},
-            ]
-        },
-        config=compiled_graph_and_config.config,
-    )
+    try:
+        result = compiled_graph_and_config.graph.invoke(
+            {
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_message},
+                ]
+            },
+            config=compiled_graph_and_config.config,
+        )
+    finally:
+        shutdown_tools()
     latency_seconds = time.monotonic() - start_time
 
     messages = result["messages"]
