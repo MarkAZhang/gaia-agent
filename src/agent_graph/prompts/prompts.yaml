@@ -28,6 +28,9 @@ react_system_prompt:
     4. Be conservative when deciding a tool is not available. For example, if a web search doesn't return the expected results
     Try again with different queries.
     5. If the right tool is not available, it should be obvious. Describe what the tool should do.
+    6. You have access to a sandboxed coding tool and can freely install packages.
+      When answering a question, think about whether a specialized package can help you. A web search might surface specialized packages.
+      Only pursue brute force for challenging problems if you've determined there are no specialized packages that can assist you.
     </tool_usage>
 
   tool_not_available_examples: |
