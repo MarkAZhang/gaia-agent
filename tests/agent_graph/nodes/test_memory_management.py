@@ -153,6 +153,5 @@ def test_already_removed_tool_messages_stay_removed():
     state = {"messages": messages}
     result = memory_management(state)
 
-    assert len(result["messages"]) == 1
-    assert result["messages"][0].content == "removed"
-    assert result["messages"][0].tool_call_id == "c1"
+    # Already-removed tool messages should not be replaced again
+    assert len(result["messages"]) == 0

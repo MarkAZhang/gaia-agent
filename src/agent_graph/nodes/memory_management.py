@@ -28,7 +28,7 @@ def memory_management(state: MessagesState) -> dict:
     replacements = []
     for i in range(last_ai_idx):
         msg = messages[i]
-        if msg.type == "tool":
+        if msg.type == "tool" and msg.content != "removed":
             replacements.append(
                 ToolMessage(
                     content="removed",
