@@ -2,6 +2,8 @@ import json
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
+from tools.tool_response import ToolError, ToolSuccess
+
 
 def _mock_execution(stdout=None, stderr=None, error=None, results=None):
     return SimpleNamespace(
@@ -29,7 +31,8 @@ def test_execute_code_snippet_default_language_python():
         result = execute_code_snippet.invoke({"snippet": "print('hello')"})
 
     sandbox.run_code.assert_called_once_with("print('hello')", language="python")
-    payload = json.loads(result)
+    assert isinstance(result, ToolSuccess)
+    payload = json.loads(result.response)
     assert payload["stdout"] == "hello\n"
 
 
@@ -48,7 +51,8 @@ def test_execute_code_snippet_custom_language():
     sandbox.run_code.assert_called_once_with(
         "console.log(42)", language="javascript"
     )
-    payload = json.loads(result)
+    assert isinstance(result, ToolSuccess)
+    payload = json.loads(result.response)
     assert payload["results"] == ["42"]
 
 
@@ -63,7 +67,8 @@ def test_execute_code_snippet_reports_error_and_stderr():
     with patcher:
         result = execute_code_snippet.invoke({"snippet": "raise ValueError('boom')"})
 
-    payload = json.loads(result)
+    assert isinstance(result, ToolSuccess)
+    payload = json.loads(result.response)
     assert payload["stderr"] == "bad\n"
     assert payload["error"] == "ValueError: boom"
 
@@ -75,7 +80,8 @@ def test_execute_code_snippet_no_output():
     with patcher:
         result = execute_code_snippet.invoke({"snippet": "x = 1"})
 
-    payload = json.loads(result)
+    assert isinstance(result, ToolSuccess)
+    payload = json.loads(result.response)
     assert payload == {"stdout": "", "stderr": "", "error": None, "results": []}
 
 
@@ -96,7 +102,8 @@ def test_execute_code_file_reads_and_runs_file():
         ".gaia-questions/files/2023/validation/script.py"
     )
     sandbox.run_code.assert_called_once_with("print('ok')", language="python")
-    payload = json.loads(result)
+    assert isinstance(result, ToolSuccess)
+    payload = json.loads(result.response)
     assert payload["stdout"] == "ok"
 
 
@@ -112,3 +119,30 @@ def test_execute_code_file_custom_language():
 
     mock_path.assert_called_once_with(".gaia-questions/files/run.sh")
     sandbox.run_code.assert_called_once_with("echo hi", language="bash")
+
+
+def test_execute_code_snippet_returns_tool_error_on_exception():
+    from tools.code_runner import execute_code_snippet
+
+    patcher = patch(
+        "tools.code_runner.Sandbox.create",
+        side_effect=RuntimeError("sandbox unavailable"),
+    )
+    with patcher:
+        result = execute_code_snippet.invoke({"snippet": "print('hi')"})
+
+    assert isinstance(result, ToolError)
+    assert "sandbox unavailable" in result.error
+
+
+def test_execute_code_file_returns_tool_error_on_exception():
+    from tools.code_runner import execute_code_file
+
+    with patch(
+        "tools.code_runner.to_local_file_path",
+        side_effect=FileNotFoundError("no such file"),
+    ):
+        result = execute_code_file.invoke({"file_path": "missing.py"})
+
+    assert isinstance(result, ToolError)
+    assert "no such file" in result.error

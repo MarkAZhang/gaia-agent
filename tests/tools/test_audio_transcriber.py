@@ -1,8 +1,10 @@
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
+from tools.tool_response import ToolError, ToolSuccess
 
-def test_transcribe_audio_returns_transcript():
+
+def test_transcribe_audio_returns_tool_success():
     segment1 = SimpleNamespace(text=" Hello world. ")
     segment2 = SimpleNamespace(text=" How are you? ")
     mock_model = MagicMock()
@@ -16,7 +18,8 @@ def test_transcribe_audio_returns_transcript():
     mock_model.transcribe.assert_called_once_with(
         ".gaia-questions/files/2023/validation/audio.mp3"
     )
-    assert result == "Hello world. How are you?"
+    assert isinstance(result, ToolSuccess)
+    assert result.response == "Hello world. How are you?"
 
 
 def test_transcribe_audio_resolves_absolute_path():
@@ -47,7 +50,7 @@ def test_transcribe_audio_resolves_already_rooted_path():
     )
 
 
-def test_transcribe_audio_returns_empty_string_for_silence():
+def test_transcribe_audio_returns_empty_response_for_silence():
     mock_model = MagicMock()
     mock_model.transcribe.return_value = ([], None)
 
@@ -56,7 +59,8 @@ def test_transcribe_audio_returns_empty_string_for_silence():
 
         result = transcribe_audio.invoke({"file_path": "silence.wav"})
 
-    assert result == ""
+    assert isinstance(result, ToolSuccess)
+    assert result.response == ""
 
 
 def test_transcribe_audio_strips_whitespace_from_segments():
@@ -69,4 +73,18 @@ def test_transcribe_audio_strips_whitespace_from_segments():
 
         result = transcribe_audio.invoke({"file_path": "audio.mp3"})
 
-    assert result == "padded text"
+    assert isinstance(result, ToolSuccess)
+    assert result.response == "padded text"
+
+
+def test_transcribe_audio_returns_tool_error_on_exception():
+    mock_model = MagicMock()
+    mock_model.transcribe.side_effect = RuntimeError("file not found")
+
+    with patch("tools.audio_transcriber.model", mock_model):
+        from tools.audio_transcriber import transcribe_audio
+
+        result = transcribe_audio.invoke({"file_path": "missing.mp3"})
+
+    assert isinstance(result, ToolError)
+    assert "file not found" in result.error
