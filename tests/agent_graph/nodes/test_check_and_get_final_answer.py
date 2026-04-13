@@ -21,7 +21,7 @@ def test_returns_error_message_when_no_ans_prefix():
     msg = AIMessage(content="I think the answer is 42.")
     state = {"agent_messages": [msg]}
     result = check_and_get_final_answer(state)
-    assert result["agent_messages"][0]["role"] == "human"
+    assert result["agent_messages"][0]["role"] == "system"
     assert "Ans:" in result["agent_messages"][0]["content"]
 
 
@@ -29,7 +29,7 @@ def test_returns_error_for_empty_content():
     msg = AIMessage(content="")
     state = {"agent_messages": [msg]}
     result = check_and_get_final_answer(state)
-    assert result["agent_messages"][0]["role"] == "human"
+    assert result["agent_messages"][0]["role"] == "system"
 
 
 def test_extracts_answer_when_only_ans_line():

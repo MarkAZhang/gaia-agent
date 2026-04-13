@@ -8,7 +8,6 @@ from langchain_core.tools import BaseTool
 from langfuse.langchain import CallbackHandler
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.state import CompiledStateGraph
-from langgraph.prebuilt import ToolNode
 
 from agent_graph.agent_dependencies import AgentDependencies
 from agent_graph.context.agent_graph_state import AgentGraphState
@@ -20,6 +19,7 @@ from agent_graph.nodes.return_llm_refusal import return_llm_refusal
 from agent_graph.nodes.return_llm_tool_not_available import (
     return_llm_tool_not_available,
 )
+from agent_graph.nodes.tool_node import tool_node
 from tools.code_runner import execute_code_file, execute_code_snippet
 from tools.document_parser import parse_document
 from llm_wrappers.gemini_image_analyzer import GeminiImageAnalyzer
@@ -46,22 +46,10 @@ def _get_tools() -> list[BaseTool]:
     ]
 
 
-def _create_tool_node(tools: list[BaseTool]):
-    tool_node = ToolNode(tools)
-
-    def run_tools(state: AgentGraphState) -> dict:
-        # ToolNode expects {"messages": [<ai_message_with_tool_calls>]}.
-        # The last agent message contains the tool calls.
-        result = tool_node.invoke({"messages": [state["agent_messages"][-1]]})
-        return {"tool_messages": result["messages"]}
-
-    return run_tools
-
-
 def _build_graph(tools: list[BaseTool]) -> CompiledStateGraph:
     graph = StateGraph(AgentGraphState)
     graph.add_node("core_agent", core_agent)
-    graph.add_node("tools", _create_tool_node(tools))
+    graph.add_node("tools", tool_node(tools))
     graph.add_node("check_and_get_final_answer", check_and_get_final_answer)
     graph.add_node("return_llm_refusal", return_llm_refusal)
     graph.add_node("return_llm_tool_not_available", return_llm_tool_not_available)

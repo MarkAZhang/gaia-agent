@@ -12,4 +12,4 @@ def check_and_get_final_answer(state: AgentGraphState) -> dict:
         return {"agent_messages": [{"role": "ai", "content": final_answer}]}
 
     error_msg = get_prompt("final_answer_format_error")
-    return {"agent_messages": [{"role": "human", "content": error_msg}]}
+    return {"agent_messages": [{"role": "system", "content": error_msg}]}
