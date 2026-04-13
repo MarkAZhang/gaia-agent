@@ -55,11 +55,11 @@ react_system_prompt:
     Formatting rules
     1. Please report the final answer at the end of your response, on a new line.
     2. Start the new line with "Ans:"
-    3. For the final answer, be as concise as possible (e.g., a single number, a name, or a comma-separated list). Follow any instructions in the initial request carefully.
-    4. If the answer is purely numeric, output digits only (no commas, units, words) as a string.
-    5. Do not include units (like 'kg' or 'meters') unless the question explicitly asks for them.
-    6. Do not include other words on the final line, like "The final answer is".
-    7. Do not include punctuation such as periods unless the question explicitly asks for it.
+    3. The final answer should be as concise as possible (e.g., a single number, a name, or a comma-separated list). Follow any instructions in the initial request carefully.
+    4. If the final answer is purely numeric, it should contain only digits (no commas, units, or words) as a string.
+    5. The final answer should not include units (like 'kg' or 'meters') unless the question explicitly asks for them.
+    6. The final answer should not include other words on the final line, like "The final answer is".
+    7. The final answer should not include any punctuation such as periods unless the question explicitly asks for it.
     </formatting_rules>
 
   files: |
@@ -84,6 +84,27 @@ react_system_prompt:
     <conclusion>
     {file_paths_block}Now please answer the following question:
     </conclusion>
+
+output_formatter_system_prompt: |
+  You are an output formatting assistant. Your job is to check a final answer against a set of formatting rules and fix it if needed.
+
+  You will be given:
+  1. The original user question.
+  2. The final answer produced by an agent.
+  3. A set of formatting rules.
+
+  Formatting rules:
+  - The final answer should be as concise as possible (e.g., a single number, a name, or a comma-separated list). Follow any instructions in the initial request carefully.
+  - If the final answer is purely numeric, it should contain only digits (no commas, units, or words) as a string.
+  - The final answer should not include units (like 'kg' or 'meters') unless the question explicitly asks for them.
+  - The final answer should not include other words on the final line, like "The final answer is".
+  - The final answer should not include any punctuation such as periods unless the question explicitly asks for it.
+
+  Instructions:
+  - If the answer already conforms to the formatting rules, return it exactly as-is.
+  - If the answer needs minor adjustments to conform, apply the formatting rules and return the corrected answer.
+  - Return ONLY the formatted answer with no additional text, explanation, or preamble.
+  - If you are unsure whether a change is appropriate, return the original answer unchanged.
 
 final_answer_format_error: |
   Your response must end with the final answer on the last line, prefixed by "Ans:".

@@ -16,6 +16,7 @@ from agent_graph.edges.should_continue import should_continue
 from agent_graph.nodes.check_and_get_final_answer import check_and_get_final_answer
 from agent_graph.nodes.core_agent import core_agent
 from agent_graph.nodes.memory_management import memory_management
+from agent_graph.nodes.output_formatter import output_formatter
 from agent_graph.nodes.return_llm_refusal import return_llm_refusal
 from agent_graph.nodes.return_llm_tool_not_available import (
     return_llm_tool_not_available,
@@ -52,6 +53,7 @@ def _build_graph(tools: list[BaseTool]) -> CompiledStateGraph:
     graph.add_node("tools", ToolNode(tools))
     graph.add_node("memory_management", memory_management)
     graph.add_node("check_and_get_final_answer", check_and_get_final_answer)
+    graph.add_node("output_formatter", output_formatter)
     graph.add_node("return_llm_refusal", return_llm_refusal)
     graph.add_node("return_llm_tool_not_available", return_llm_tool_not_available)
 
@@ -73,8 +75,9 @@ def _build_graph(tools: list[BaseTool]) -> CompiledStateGraph:
     graph.add_conditional_edges(
         "check_and_get_final_answer",
         check_answer_routing,
-        ["core_agent", END],
+        ["core_agent", "output_formatter"],
     )
+    graph.add_edge("output_formatter", END)
 
     return graph.compile()
 
