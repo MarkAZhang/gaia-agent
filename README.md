@@ -14,7 +14,7 @@
 
 An AI agent built to tackle the [GAIA benchmark](https://arxiv.org/abs/2311.12983) (General AI Assistants), an evaluation suite where questions are conceptually simple for humans (~92% accuracy) but operationally complex for AI, requiring multi-step reasoning, web browsing, code execution, and file handling.
 
-> The GAIA benchmark was challenging for AI when it was first released in late 2023. The benchmark has since been saturated (top agents score around 92%). Nevertheless, the benchmark remains a great resource for learning how to build AI agents.
+> The GAIA benchmark was challenging for AI when it was first released in late 2023. The benchmark has since been saturated (top agents score around 92%). Nevertheless, the benchmark remains a great instructional resource for learning to build AI agents, providing non-trivial challenges even to modern LLMs.
 
 This project serves as a personal learning exercise in building accurate, low-cost, and low-latency AI agents.
 
@@ -26,35 +26,36 @@ Areas of technical focus include memory management, tool design, and agentic arc
 | ------------------------------------ | ------- | ---------------- | ------- |
 | OPS-Agentic-Search (Alibaba Cloud)   | 2026-03 | 98.9%            | 92.3%   |
 | Nemotron-ToolOrchestra-0106 (NVIDIA) | 2026-01 | 96.7%            | 90.3%   |
-| **This agent (latest)**              | 2026-04 | **TBD**          | **--**  |
+| **This agent (latest)**              | 2026-04 | 77.4%            | **N/A** |
 
 > Top scores sourced from [https://huggingface.co/spaces/gaia-benchmark/leaderboard](https://huggingface.co/spaces/gaia-benchmark/leaderboard) as of 2026-04-09.
 
 ### Evaluation Metrics
 
-| Metric            | Value               |
-| ----------------- | ------------------- |
-| Questions         | 20 (Level 1 subset) |
-| Accuracy          | 45%                 |
-| Avg Cost          | $0.12               |
-| Avg Latency (s)   | TBD                 |
-| Avg Output Tokens | TBD                 |
-| Avg Turns         | TBD                 |
+| Metric            | Value                |
+| ----------------- | -------------------- |
+| Questions         | Level 1 (Validation) |
+| Accuracy          | 77.4% (41 / 53)      |
+| Avg Cost          | $0.61                |
+| Avg Latency (s)   | 76                   |
+| Avg Input Tokens  | 109519               |
+| Avg Output Tokens | 2353                 |
+| Avg Turns         | 19.9                 |
 
 ## Technical Details
 
 ### Architecture
 
-![Agentic Architecture Diagram](./docs/gaia_agent_diagram_1.png)
+![Agentic Architecture Diagram](./docs/gaia_agent_diagram_v2.png)
 
-The current architecture is a simple "ReAct" loop with the following components:
+The current architecture is a relatively simple "ReAct agent" with the following components:
 
 #### Core Agent
 
 The core agent performs the following roles:
 
 - reasons about what is currently known and still needs to be learned
-- reviews tool output
+- reviews tool output and explicitly summarizes its findings from both the tool output, and from its approach (did what it try work?)
 - makes new tool calls
 - generates the final answer
 
@@ -62,43 +63,55 @@ The core agent performs the following roles:
 
 Executes tool calls, and appends the entire tool output to the message history (which is fed back to the agent)
 
+Here are the tools we currently support:
+
+- Web Search, via [Tavily](https://tavily.com/).
+- Code Execution, via [E2B](https://e2b.dev/). The code is executed in a secure, isolated sandbox that persists for the duration of a given question, allowing the agent to install dependencies and execute code in subsequent tool calls. Also allows the agent to directly execute a Python file from local disk (for situations where a code file is provided)
+- Document Parsing, via [Docling](https://docling-project.github.io/docling/). Converts complex PDFs and Excel files into Markdown, preserving layout and structure information.
+- Audio Transcription, via [faster-whisper](https://github.com/SYSTRAN/faster-whisper).
+- Image Analysis, via [Gemini 3.1 Pro Preview](https://ai.google.dev/gemini-api/docs/models/gemini-3.1-pro-preview), a multimodal LLM. Receives an image and a query to answer.
+
 #### Router
 
-Looks at the agent output and decides next step.
+Looks at the agent output and determines the next node to call.
+
+#### Memory Management
+
+Manages the short-term memory, trimming unnecessary information to keep the LLM focused and reduce cost.
+
+Currently, we remove all tool outputs besides the most recent ones, and we prompt the LLM to explicitly summarize its learnings whenever it views the tool outputs. Tool outputs (such as search results from Tavily) are often verbose and have little signal beyond what the LLM learns.
+
+#### Input Guardrail
+
+De-obfuscates the user input. We perform various manipulations, such as reversing the string or base64-decoding it, then select the string with the most common English words as the final user input.
+
+This runs on every call prior to passing the input into an LLM. It does not use an LLM, so it is fast and cheap.
+
+For a production agent, this guardrail could perform operations like refusing suspicious inputs.
+
+#### Output Guardrail
+
+Double-checks the answer from the agent to ensure it meets GAIA formatting standards. We use [GPT-4o mini](https://developers.openai.com/api/docs/models/gpt-4o-mini), a fast affordable LLM, to look at the question and the LLM response and remove any unnecessary words or punctuation.
 
 ### Tech Stack
 
-| Layer              | Technology                                                        |
-| ------------------ | ----------------------------------------------------------------- |
-| **LLM**            | Claude Opus 4.6                                                   |
-| **Orchestration**  | [LangGraph](https://github.com/langchain-ai/langgraph)            |
-| **Web Search**     | [Tavily](https://tavily.com/)                                     |
-| **Code Execution** | [E2B](https://e2b.dev/) (sandboxed Python/JS/Bash)                |
-| **Observability**  | [Langfuse](https://langfuse.com/) (tracing, experiments, metrics) |
-
-### Key Design Decisions
-
-- Selection of models and tools.
-- Multiple tools, over monolithic tools with complex interfaces.
-- (later) Handling context and memory. Subagents.
+| Layer                             | Technology                                                                                    |
+| --------------------------------- | --------------------------------------------------------------------------------------------- |
+| **LLM**                           | Claude Opus 4.6                                                                               |
+| **Orchestration**                 | [LangGraph](https://github.com/langchain-ai/langgraph)                                        |
+| **Web Search**                    | [Tavily](https://tavily.com/)                                                                 |
+| **Code Execution**                | [E2B](https://e2b.dev/) (sandboxed Python/JS/Bash)                                            |
+| **Document Parsing**              | [Docling](https://docling-project.github.io/docling/)                                         |
+| **Audio Transcription**           | [faster-whisper](https://github.com/SYSTRAN/faster-whisper)                                   |
+| **Image Analysis**                | [Gemini 3.1 Pro Preview](https://ai.google.dev/gemini-api/docs/models/gemini-3.1-pro-preview) |
+| **Output Guardrail (Formatting)** | [GPT-4o mini](https://developers.openai.com/api/docs/models/gpt-4o-mini)                      |
+| **Observability**                 | [Langfuse](https://langfuse.com/) (tracing, experiments, metrics)                             |
 
 ## Upcoming Roadmap
 
 This project is under active development. Planned work includes:
 
-- **Full Level 1 evaluation** -- Expand from the current 20-question subset to all 53 Level 1 validation questions. This will provide a more statistically meaningful accuracy number and uncover edge cases the current subset doesn't cover.
-
-- **File handling via Docling** -- Add document parsing (PDF, Excel, images) using IBM's [Docling](https://github.com/DS4SD/docling) library. Several Level 1 questions require reading attached spreadsheets or images that the agent currently cannot process. Docling was chosen over Unstructured for its superior table extraction accuracy and LLM-friendly Markdown output.
-
-- **Audio transcription** -- Add speech-to-text capabilities for `.mp3` questions (e.g., via Whisper). Two of the 20 current questions involve audio files that the agent currently flags as "tool not available."
-
-- **Multi-model routing** -- Route different subtasks to specialized models (e.g., a vision model for image questions, a cheaper model for simple formatting). The current single-model approach uses Claude for everything, which is effective but not cost-optimal.
-
-- **Answer verification node** -- Add a "critic" node that reviews the final answer against the original question before outputting, catching logical errors or format issues that slip past the current check. This pattern is common among 70%+ scorers on the GAIA leaderboard.
-
-- **Planning and context management** -- Implement periodic fact-summarization (inspired by approaches like AutoGen's Ledger) to prevent context window bloat on multi-step questions and reduce the agent's tendency to repeat failed strategies.
-
-- **Level 2 and Level 3 support** -- After achieving strong Level 1 results, extend to harder questions requiring 5-10+ steps, multiple tools in sequence, and long-horizon planning.
+- **Level 2 and Level 3 support** - Running the agent on Level 2 and Level 3 questions.
 
 ## Quickstart
 
