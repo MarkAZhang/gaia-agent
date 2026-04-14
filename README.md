@@ -111,7 +111,14 @@ Double-checks the answer from the agent to ensure it meets GAIA formatting stand
 
 This project is under active development. Planned work includes:
 
+- **Add prompt caching** - Anthropic requires 4096 tokens to cache the prompt, and we are slightly under at the moment (note this includes the system prompt plus tool definitions). Prompt caching would reduce costs significantly.
+- **Use structured outputs in LLM API calls** - This would eliminate a lot of the custom instructions currently in our system prompt.
+- **Add integration tests for tools** - We only have unit tests right now, meaning we won't catch certain bugs.
+- **Move towards integration tests for the agent graph** - Right now, we are unit testing individual nodes. Integration tests for the agent graph as a whole will allow us to refactor internals without having to update a bunch of tests with every change. If the high-level behavior stays the same, the tests should not need to be updated.
+- **Improve tool reliability, tool instructions, and add additional tools**
 - **Level 2 and Level 3 support** - Running the agent on Level 2 and Level 3 questions.
+
+_More to come: Need to analyze the results of the most recent run in more detail._
 
 ## Quickstart
 
