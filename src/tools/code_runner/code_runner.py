@@ -21,9 +21,9 @@ class CodeExecutionResult:
         return json.dumps(asdict(self))
 
 
-def _run_in_sandbox(code: str, language: Optional[str]) -> str:
+def _run_in_sandbox(code: str, language: Optional[str], timeout: int = 60) -> str:
     sandbox = get_sandbox()
-    execution = sandbox.run_code(code, language=language or "python")
+    execution = sandbox.run_code(code, language=language or "python", timeout=timeout)
 
     result = CodeExecutionResult()
     if execution.logs.stdout:
@@ -40,7 +40,7 @@ def _run_in_sandbox(code: str, language: Optional[str]) -> str:
 
 @tool
 def execute_code_snippet(
-    snippet: str, language: Optional[str] = "python"
+    snippet: str, language: Optional[str] = "python", timeout: int = 60
 ) -> ToolSuccess | ToolError:
     """Execute a code snippet in a secure, persistent E2B sandbox and return its output.
 
@@ -52,18 +52,26 @@ def execute_code_snippet(
     Note that this sandbox is persistent across multiple calls to the tool, so
     packages you install will be available in subsequent calls.
 
+    The ``timeout`` parameter controls how long the code is allowed to run (in
+    seconds, default 60). You may increase this only when necessary to solve
+    the problem. If the code times out with the default timeout, first check
+    whether the code is accidentally doing more work than necessary (e.g.
+    grepping the entire file system or running an overly large simulation) and
+    whether a more efficient approach exists (e.g. an analytical solution
+    instead of a brute-force simulation) before raising the timeout.
+
     Returns a ToolSuccess with a ``response`` field containing the JSON result,
     or a ToolError with an ``error`` field if something goes wrong.
     """
     try:
-        return ToolSuccess(response=_run_in_sandbox(snippet, language))
+        return ToolSuccess(response=_run_in_sandbox(snippet, language, timeout))
     except Exception as e:
         return ToolError(error=str(e))
 
 
 @tool
 def execute_code_file(
-    file_path: str, language: Optional[str] = "python"
+    file_path: str, language: Optional[str] = "python", timeout: int = 60
 ) -> ToolSuccess | ToolError:
     """Execute a local code file in a secure, persistent E2B sandbox and return its output.
 
@@ -77,12 +85,20 @@ def execute_code_file(
     Note that this sandbox is persistent across multiple calls to the tool, so
     packages you install will be available in subsequent calls.
 
+    The ``timeout`` parameter controls how long the code is allowed to run (in
+    seconds, default 60). You may increase this only when necessary to solve
+    the problem. If the code times out with the default timeout, first check
+    whether the code is accidentally doing more work than necessary (e.g.
+    grepping the entire file system or running an overly large simulation) and
+    whether a more efficient approach exists (e.g. an analytical solution
+    instead of a brute-force simulation) before raising the timeout.
+
     Returns a ToolSuccess with a ``response`` field containing the JSON result,
     or a ToolError with an ``error`` field if something goes wrong.
     """
     try:
         local_path = to_local_file_path(file_path)
         code = Path(local_path).read_text()
-        return ToolSuccess(response=_run_in_sandbox(code, language))
+        return ToolSuccess(response=_run_in_sandbox(code, language, timeout))
     except Exception as e:
         return ToolError(error=str(e))

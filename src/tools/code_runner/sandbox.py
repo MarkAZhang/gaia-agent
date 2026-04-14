@@ -7,7 +7,7 @@ def get_sandbox() -> Sandbox:
     """Return the persistent sandbox, creating it on first call."""
     global _sandbox
     if _sandbox is None:
-        _sandbox = Sandbox.create()
+        _sandbox = Sandbox.create(timeout=3600)
     return _sandbox
 
 
