@@ -14,27 +14,15 @@
 
 An AI agent built to tackle the [GAIA benchmark](https://arxiv.org/abs/2311.12983) (General AI Assistants), an evaluation suite where questions are conceptually simple for humans (~92% accuracy) but operationally complex for AI, requiring multi-step reasoning, web browsing, code execution, and file handling.
 
-> The GAIA benchmark was challenging for AI when it was first released in late 2023. The benchmark has since been saturated (top agents score around 92%). Nevertheless, the benchmark remains a great instructional resource for learning to build AI agents, providing non-trivial challenges even to modern LLMs.
-
 This project serves as a personal learning exercise in building accurate, low-cost, and low-latency AI agents.
 
 Areas of technical focus include memory management, tool design, and agentic architecture. We will leverage existing fit-for-purpose tools, such as Docling for turning messy PDFs into Markdown, instead of attempting to build our own.
 
-### Benchmark Comparison
-
-| Agent (Org)                          | Date    | Level 1 Accuracy | Overall |
-| ------------------------------------ | ------- | ---------------- | ------- |
-| OPS-Agentic-Search (Alibaba Cloud)   | 2026-03 | 98.9%            | 92.3%   |
-| Nemotron-ToolOrchestra-0106 (NVIDIA) | 2026-01 | 96.7%            | 90.3%   |
-| **This agent (latest)**              | 2026-04 | 77.4%            | **N/A** |
-
-> Top scores sourced from [https://huggingface.co/spaces/gaia-benchmark/leaderboard](https://huggingface.co/spaces/gaia-benchmark/leaderboard) as of 2026-04-09.
-
-### Evaluation Metrics
+### Metrics from Latest Eval
 
 | Metric            | Value                |
 | ----------------- | -------------------- |
-| Questions         | Level 1 (Validation) |
+| Question Set         | Level 1 (Validation) |
 | Accuracy          | 77.4% (41 / 53)      |
 | Avg Cost          | $0.61                |
 | Avg Latency (s)   | 76                   |
