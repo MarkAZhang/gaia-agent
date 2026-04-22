@@ -1,12 +1,11 @@
 # GAIA Agent
 
 - [Overview](#overview)
-  - [Benchmark Comparison](#benchmark-comparison)
-  - [Evaluation Metrics](#evaluation-metrics)
+  - [Recent Runs](#recent-runs)
+  - [Metrics from Latest Eval](#metrics-from-latest-eval)
 - [Technical Details](#technical-details)
   - [Architecture](#architecture)
   - [Tech Stack](#tech-stack)
-  - [Key Design Decisions](#key-design-decisions)
 - [Upcoming Roadmap](#upcoming-roadmap)
 - [Quickstart](#quickstart)
 
@@ -17,6 +16,13 @@ An AI agent built to tackle the [GAIA benchmark](https://arxiv.org/abs/2311.1298
 This project serves as a personal learning exercise in building accurate, low-cost, and low-latency AI agents.
 
 Areas of technical focus include memory management, tool design, and agentic architecture. We will leverage existing fit-for-purpose tools, such as Docling for turning messy PDFs into Markdown, instead of attempting to build our own.
+
+### Recent Runs
+
+Here are Langfuse traces of some recent runs:
+- [Parsing Excel](https://cloud.langfuse.com/project/cmn5g24ls00mlad07vsmz1o0r/traces/50cb086ebb34159612cf879f65bde665?observation=8133a0cc12b3ccce)
+- [Transcribing Audio](https://cloud.langfuse.com/project/cmn5g24ls00mlad07vsmz1o0r/traces/48a4dd8dbd66acda62474bfab7169e12?observation=3decffbcc2d0efd6)
+
 
 ### Metrics from Latest Eval
 
