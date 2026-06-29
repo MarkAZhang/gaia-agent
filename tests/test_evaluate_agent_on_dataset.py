@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 from agent_graph.agent_response import AgentResponse, AgentRunMetrics
-from evaluate_agent_on_dataset import run_agent_for_dataset_item_task
+from evaluate_agent_on_dataset import evaluate_agent_on_dataset, run_agent_for_dataset_item
 
 
 def _make_agent_response(**overrides):
@@ -19,11 +19,11 @@ def _make_agent_response(**overrides):
     return AgentResponse(**defaults)
 
 
-class TestEvaluateAgentOnDataset:
+class TestRunAgentForDatasetItem:
     @patch("evaluate_agent_on_dataset.invoke_agent_with_user_message")
-    @patch("evaluate_agent_on_dataset.CallbackHandler")
+    @patch("evaluate_agent_on_dataset.create_langsmith_tracer")
     def test_passes_question_to_invoke_agent(
-        self, mock_callback_handler_cls, mock_invoke
+        self, mock_create_tracer, mock_invoke
     ):
         mock_invoke.return_value = _make_agent_response(
             metrics=AgentRunMetrics(
@@ -33,28 +33,28 @@ class TestEvaluateAgentOnDataset:
                 total_turns=1,
             ),
         )
-        mock_callback_handler_cls.return_value = MagicMock()
+        mock_tracer = MagicMock()
+        mock_create_tracer.return_value = mock_tracer
 
-        item = MagicMock()
-        item.input = {
+        inputs = {
             "task_id": "task1",
             "question": "What is 2+2?",
             "file_name": "",
             "file_path": "",
         }
 
-        run_agent_for_dataset_item_task(item=item)
+        run_agent_for_dataset_item(inputs)
 
         mock_invoke.assert_called_once_with(
             "What is 2+2?",
-            langfuse_handler=mock_callback_handler_cls.return_value,
+            tracing_handler=mock_tracer,
             available_file_path=None,
         )
 
     @patch("evaluate_agent_on_dataset.invoke_agent_with_user_message")
-    @patch("evaluate_agent_on_dataset.CallbackHandler")
-    def test_returns_agent_response(self, mock_callback_handler_cls, mock_invoke):
-        expected = _make_agent_response(
+    @patch("evaluate_agent_on_dataset.create_langsmith_tracer")
+    def test_returns_serialized_output(self, mock_create_tracer, mock_invoke):
+        mock_invoke.return_value = _make_agent_response(
             answer="the answer is 4",
             metrics=AgentRunMetrics(
                 latency_seconds=2.5,
@@ -63,98 +63,132 @@ class TestEvaluateAgentOnDataset:
                 total_turns=3,
             ),
         )
-        mock_invoke.return_value = expected
-        mock_callback_handler_cls.return_value = MagicMock()
+        mock_create_tracer.return_value = MagicMock()
 
-        item = MagicMock()
-        item.input = {
+        inputs = {
             "task_id": "task1",
             "question": "What is 2+2?",
             "file_name": "",
             "file_path": "",
         }
 
-        result = run_agent_for_dataset_item_task(item=item)
+        result = run_agent_for_dataset_item(inputs)
 
-        assert result is expected
+        assert result["answer"] == "the answer is 4"
+        assert result["metrics"]["latency_seconds"] == 2.5
+        assert result["metrics"]["input_tokens"] == 100
+        assert result["metrics"]["output_tokens"] == 50
+        assert result["metrics"]["total_turns"] == 3
 
     @patch("evaluate_agent_on_dataset.invoke_agent_with_user_message")
-    @patch("evaluate_agent_on_dataset.CallbackHandler")
-    def test_creates_langfuse_callback_handler(
-        self, mock_callback_handler_cls, mock_invoke
-    ):
+    @patch("evaluate_agent_on_dataset.create_langsmith_tracer")
+    def test_creates_langsmith_tracer(self, mock_create_tracer, mock_invoke):
         mock_invoke.return_value = _make_agent_response()
+        mock_create_tracer.return_value = MagicMock()
 
-        item = MagicMock()
-        item.input = {
+        inputs = {
             "task_id": "task1",
             "question": "test",
             "file_name": "",
             "file_path": "",
         }
 
-        run_agent_for_dataset_item_task(item=item)
+        run_agent_for_dataset_item(inputs)
 
-        mock_callback_handler_cls.assert_called_once()
+        mock_create_tracer.assert_called_once()
 
     @patch("evaluate_agent_on_dataset.invoke_agent_with_user_message")
-    @patch("evaluate_agent_on_dataset.CallbackHandler")
-    def test_passes_langfuse_handler_to_invoke_agent(
-        self, mock_callback_handler_cls, mock_invoke
+    @patch("evaluate_agent_on_dataset.create_langsmith_tracer")
+    def test_passes_tracing_handler_to_invoke_agent(
+        self, mock_create_tracer, mock_invoke
     ):
-        mock_handler = MagicMock()
-        mock_callback_handler_cls.return_value = mock_handler
+        mock_tracer = MagicMock()
+        mock_create_tracer.return_value = mock_tracer
         mock_invoke.return_value = _make_agent_response()
 
-        item = MagicMock()
-        item.input = {
+        inputs = {
             "task_id": "task1",
             "question": "test",
             "file_name": "",
             "file_path": "",
         }
 
-        run_agent_for_dataset_item_task(item=item)
+        run_agent_for_dataset_item(inputs)
 
         _, kwargs = mock_invoke.call_args
-        assert kwargs["langfuse_handler"] is mock_handler
+        assert kwargs["tracing_handler"] is mock_tracer
 
     @patch("evaluate_agent_on_dataset.invoke_agent_with_user_message")
-    @patch("evaluate_agent_on_dataset.CallbackHandler")
+    @patch("evaluate_agent_on_dataset.create_langsmith_tracer")
     def test_passes_file_path_to_invoke_agent(
-        self, mock_callback_handler_cls, mock_invoke
+        self, mock_create_tracer, mock_invoke
     ):
         mock_invoke.return_value = _make_agent_response()
+        mock_create_tracer.return_value = MagicMock()
 
-        item = MagicMock()
-        item.input = {
+        inputs = {
             "task_id": "task1",
             "question": "q",
             "file_name": "abc.png",
             "file_path": "2023/validation/abc.png",
         }
 
-        run_agent_for_dataset_item_task(item=item)
+        run_agent_for_dataset_item(inputs)
 
         _, kwargs = mock_invoke.call_args
         assert kwargs["available_file_path"] == "2023/validation/abc.png"
 
     @patch("evaluate_agent_on_dataset.invoke_agent_with_user_message")
-    @patch("evaluate_agent_on_dataset.CallbackHandler")
+    @patch("evaluate_agent_on_dataset.create_langsmith_tracer")
     def test_passes_none_file_path_when_empty(
-        self, mock_callback_handler_cls, mock_invoke
+        self, mock_create_tracer, mock_invoke
     ):
         mock_invoke.return_value = _make_agent_response()
+        mock_create_tracer.return_value = MagicMock()
 
-        item = MagicMock()
-        item.input = {
+        inputs = {
             "task_id": "task1",
             "question": "q",
             "file_name": "",
             "file_path": "",
         }
 
-        run_agent_for_dataset_item_task(item=item)
+        run_agent_for_dataset_item(inputs)
 
         _, kwargs = mock_invoke.call_args
         assert kwargs["available_file_path"] is None
+
+
+class TestEvaluateAgentOnDataset:
+    @patch("evaluate_agent_on_dataset.Client")
+    def test_calls_client_evaluate(self, mock_client_cls):
+        mock_client = MagicMock()
+        mock_client_cls.return_value = mock_client
+
+        evaluate_agent_on_dataset(
+            dataset_name="my-dataset",
+            name="run-1",
+            description="test run",
+        )
+
+        mock_client.evaluate.assert_called_once()
+        _, kwargs = mock_client.evaluate.call_args
+        assert kwargs["data"] == "my-dataset"
+        assert kwargs["experiment_prefix"] == "run-1"
+        assert kwargs["description"] == "test run"
+        assert kwargs["max_concurrency"] == 1
+        assert len(kwargs["evaluators"]) == 5
+
+    @patch("evaluate_agent_on_dataset.Client")
+    def test_uses_default_experiment_prefix_when_name_empty(self, mock_client_cls):
+        mock_client = MagicMock()
+        mock_client_cls.return_value = mock_client
+
+        evaluate_agent_on_dataset(
+            dataset_name="my-dataset",
+            name="",
+            description="",
+        )
+
+        _, kwargs = mock_client.evaluate.call_args
+        assert kwargs["experiment_prefix"] == "gaia-eval"

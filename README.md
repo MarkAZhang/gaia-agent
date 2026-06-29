@@ -19,9 +19,8 @@ Areas of technical focus include memory management, tool design, and agentic arc
 
 ### Recent Runs
 
-Here are Langfuse traces of some recent runs:
-- [Parsing Excel](https://cloud.langfuse.com/project/cmn5g24ls00mlad07vsmz1o0r/traces/50cb086ebb34159612cf879f65bde665?observation=8133a0cc12b3ccce)
-- [Transcribing Audio](https://cloud.langfuse.com/project/cmn5g24ls00mlad07vsmz1o0r/traces/48a4dd8dbd66acda62474bfab7169e12?observation=3decffbcc2d0efd6)
+Here are LangSmith traces of some recent runs:
+- View traces in the [LangSmith gaia-agent project](https://smith.langchain.com/)
 
 
 ### Metrics from Latest Eval
@@ -99,7 +98,7 @@ Double-checks the answer from the agent to ensure it meets GAIA formatting stand
 | **Audio Transcription**           | [faster-whisper](https://github.com/SYSTRAN/faster-whisper)                                   |
 | **Image Analysis**                | [Gemini 3.1 Pro Preview](https://ai.google.dev/gemini-api/docs/models/gemini-3.1-pro-preview) |
 | **Output Guardrail (Formatting)** | [GPT-4o mini](https://developers.openai.com/api/docs/models/gpt-4o-mini)                      |
-| **Observability**                 | [Langfuse](https://langfuse.com/) (tracing, experiments, metrics)                             |
+| **Observability**                 | [LangSmith](https://smith.langchain.com/) (tracing, experiments, metrics)                     |
 
 ## Upcoming Roadmap
 
@@ -126,7 +125,7 @@ uv sync
 
 ### 2. Set up environment variables
 
-Copy the example file and fill in your API keys for Anthropic, Tavily, E2B, and Langfuse.
+Copy the example file and fill in your API keys for Anthropic, Tavily, E2B, and LangSmith.
 
 ```bash
 cp .env.example .env
@@ -136,6 +135,20 @@ cp .env.example .env
 
 ```bash
 
-# Evaluate on a particular dataset (requires Langfuse)
-python evaluate_agent_on_dataset.py
+# Evaluate on a particular dataset (requires LangSmith)
+uv run evaluate my-dataset --name "baseline-run" --description "Validation set eval"
 ```
+
+Set `USE_LANGSMITH=1` in `.env` to enable tracing for interactive runs.
+
+### Dataset migration from Langfuse
+
+If you have existing datasets in Langfuse, migrate them once with:
+
+```bash
+uv pip install langfuse  # temporary, for migration only
+python scripts/migrate_langfuse_dataset_to_langsmith.py my-dataset --dry-run
+python scripts/migrate_langfuse_dataset_to_langsmith.py my-dataset --langsmith-dataset gaia-validation
+```
+
+Langfuse `expected_output` strings are stored as LangSmith `outputs.answer`. Example inputs (`task_id`, `question`, `file_name`, `file_path`) are copied unchanged into `inputs`.

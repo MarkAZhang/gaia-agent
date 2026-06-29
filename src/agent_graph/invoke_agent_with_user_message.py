@@ -2,7 +2,7 @@ import time
 from typing import Optional
 
 from langchain_core.messages import AIMessage, BaseMessage, ToolMessage
-from langfuse.langchain import CallbackHandler
+from langchain_core.callbacks.base import BaseCallbackHandler
 
 from agent_graph.agent_response import AgentResponse, AgentRunMetrics
 from agent_graph.build_agent_graph_and_config import build_agent_graph_and_config
@@ -31,13 +31,13 @@ def _compute_metrics(messages: list[BaseMessage]) -> tuple[int, int, int]:
 
 def invoke_agent_with_user_message(
     input_str: str,
-    langfuse_handler: Optional[CallbackHandler],
+    tracing_handler: Optional[BaseCallbackHandler],
     available_file_path: Optional[str] = None,
 ) -> AgentResponse:
     deobfuscation_result = deobfuscate_user_input(input_str)
     user_message = deobfuscation_result.text
 
-    compiled_graph_and_config = build_agent_graph_and_config(langfuse_handler)
+    compiled_graph_and_config = build_agent_graph_and_config(tracing_handler)
     system_prompt = build_system_prompt(available_file_path)
 
     start_time = time.monotonic()

@@ -1,7 +1,6 @@
 import warnings
 
 import pytest
-from agent_graph.agent_response import AgentResponse, AgentRunMetrics
 from evaluate_agent_on_dataset import DatasetItemInput
 from evaluators.gaia_score_evaluator import (
     gaia_score_evaluator,
@@ -16,77 +15,78 @@ def _make_dataset_item_input() -> DatasetItemInput:
     return DatasetItemInput(task_id="t1", question="q", file_name="", file_path="")
 
 
-def _make_agent_response(answer: str) -> AgentResponse:
-    return AgentResponse(
-        answer=answer,
-        deobfuscation_method="none",
-        metrics=AgentRunMetrics(
-            latency_seconds=1.0,
-            input_tokens=10,
-            output_tokens=5,
-            total_turns=1,
-        ),
-    )
+def _make_outputs(answer: str) -> dict:
+    return {
+        "answer": answer,
+        "metrics": {
+            "latency_seconds": 1.0,
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "total_turns": 1,
+        },
+    }
 
 
 class TestGaiaScoreEvaluator:
-    def test_returns_zero_when_output_is_not_agent_response(self):
+    def test_returns_zero_when_output_is_missing_answer(self):
         result = gaia_score_evaluator(
-            input=_make_dataset_item_input(), output="42", expected_output="42"
+            inputs=_make_dataset_item_input(),
+            outputs={},
+            reference_outputs={"answer": "42"},
         )
-        assert result.value == 0.0
-        assert result.comment == "No AgentResponse"
+        assert result["score"] == 0.0
+        assert result["comment"] == "Missing answer or reference output"
 
-    def test_returns_zero_for_dict_output(self):
+    def test_returns_zero_when_reference_output_is_missing(self):
         result = gaia_score_evaluator(
-            input=_make_dataset_item_input(),
-            output={"answer": "42"},
-            expected_output="42",
+            inputs=_make_dataset_item_input(),
+            outputs=_make_outputs("42"),
+            reference_outputs={},
         )
-        assert result.value == 0.0
-        assert result.comment == "No AgentResponse"
+        assert result["score"] == 0.0
+        assert result["comment"] == "Missing answer or reference output"
 
     def test_exact_match_number(self):
         result = gaia_score_evaluator(
-            input=_make_dataset_item_input(),
-            output=_make_agent_response("42"),
-            expected_output="42",
+            inputs=_make_dataset_item_input(),
+            outputs=_make_outputs("42"),
+            reference_outputs={"answer": "42"},
         )
-        assert result.name == "exact_match"
-        assert result.value == 1.0
+        assert result["key"] == "exact_match"
+        assert result["score"] == 1.0
 
     def test_no_match(self):
         result = gaia_score_evaluator(
-            input=_make_dataset_item_input(),
-            output=_make_agent_response("wrong"),
-            expected_output="correct",
+            inputs=_make_dataset_item_input(),
+            outputs=_make_outputs("wrong"),
+            reference_outputs={"answer": "correct"},
         )
-        assert result.value == 0.0
+        assert result["score"] == 0.0
 
     def test_comment_includes_expected_and_actual(self):
         result = gaia_score_evaluator(
-            input=_make_dataset_item_input(),
-            output=_make_agent_response("foo"),
-            expected_output="bar",
+            inputs=_make_dataset_item_input(),
+            outputs=_make_outputs("foo"),
+            reference_outputs={"answer": "bar"},
         )
-        assert "bar" in result.comment
-        assert "foo" in result.comment
+        assert "bar" in result["comment"]
+        assert "foo" in result["comment"]
 
     def test_string_match_case_insensitive(self):
         result = gaia_score_evaluator(
-            input=_make_dataset_item_input(),
-            output=_make_agent_response("HELLO"),
-            expected_output="hello",
+            inputs=_make_dataset_item_input(),
+            outputs=_make_outputs("HELLO"),
+            reference_outputs={"answer": "hello"},
         )
-        assert result.value == 1.0
+        assert result["score"] == 1.0
 
     def test_empty_answer_does_not_match(self):
         result = gaia_score_evaluator(
-            input=_make_dataset_item_input(),
-            output=_make_agent_response(""),
-            expected_output="answer",
+            inputs=_make_dataset_item_input(),
+            outputs=_make_outputs(""),
+            reference_outputs={"answer": "answer"},
         )
-        assert result.value == 0.0
+        assert result["score"] == 0.0
 
 
 class TestNormalizeNumberStr:

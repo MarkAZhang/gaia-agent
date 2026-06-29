@@ -5,7 +5,7 @@ from typing import Optional
 from langchain_anthropic import ChatAnthropic
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import BaseTool
-from langfuse.langchain import CallbackHandler
+from langchain_core.callbacks.base import BaseCallbackHandler
 from langgraph.graph import StateGraph, MessagesState, START, END
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import ToolNode
@@ -89,7 +89,7 @@ class AgentCompiledGraphAndConfig:
 
 
 def build_agent_graph_and_config(
-    langfuse_handler: Optional[CallbackHandler],
+    tracing_handler: Optional[BaseCallbackHandler],
 ) -> AgentCompiledGraphAndConfig:
     tools = _get_tools()
     llm = ChatAnthropic(model="claude-opus-4-6").bind_tools(tools)
@@ -99,6 +99,6 @@ def build_agent_graph_and_config(
                 core_agent_model=llm,
             )
         },
-        callbacks=[langfuse_handler] if langfuse_handler else [],
+        callbacks=[tracing_handler] if tracing_handler else [],
     )
     return AgentCompiledGraphAndConfig(graph=_build_graph(tools=tools), config=config)
