@@ -45,7 +45,9 @@ def test_execute_code_snippet_default_language_python():
     with patcher:
         result = execute_code_snippet.invoke({"snippet": "print('hello')"})
 
-    sandbox.run_code.assert_called_once_with("print('hello')", language="python")
+    sandbox.run_code.assert_called_once_with(
+        "print('hello')", language="python", timeout=60
+    )
     assert isinstance(result, ToolSuccess)
     payload = json.loads(result.response)
     assert payload["stdout"] == "hello\n"
@@ -64,7 +66,7 @@ def test_execute_code_snippet_custom_language():
         )
 
     sandbox.run_code.assert_called_once_with(
-        "console.log(42)", language="javascript"
+        "console.log(42)", language="javascript", timeout=60
     )
     assert isinstance(result, ToolSuccess)
     payload = json.loads(result.response)
@@ -116,7 +118,7 @@ def test_execute_code_file_reads_and_runs_file():
     mock_path.assert_called_once_with(
         ".gaia-questions/files/2023/validation/script.py"
     )
-    sandbox.run_code.assert_called_once_with("print('ok')", language="python")
+    sandbox.run_code.assert_called_once_with("print('ok')", language="python", timeout=60)
     assert isinstance(result, ToolSuccess)
     payload = json.loads(result.response)
     assert payload["stdout"] == "ok"
@@ -133,7 +135,40 @@ def test_execute_code_file_custom_language():
         )
 
     mock_path.assert_called_once_with(".gaia-questions/files/run.sh")
-    sandbox.run_code.assert_called_once_with("echo hi", language="bash")
+    sandbox.run_code.assert_called_once_with("echo hi", language="bash", timeout=60)
+
+
+def test_execute_code_snippet_custom_timeout():
+    from tools.code_runner import execute_code_snippet
+
+    execution = _mock_execution(stdout=["done\n"])
+    patcher, sandbox = _patch_sandbox(execution)
+    with patcher:
+        result = execute_code_snippet.invoke(
+            {"snippet": "long_computation()", "timeout": 300}
+        )
+
+    sandbox.run_code.assert_called_once_with(
+        "long_computation()", language="python", timeout=300
+    )
+    assert isinstance(result, ToolSuccess)
+
+
+def test_execute_code_file_custom_timeout():
+    from tools.code_runner import execute_code_file
+
+    execution = _mock_execution(stdout=["done"])
+    patcher, sandbox = _patch_sandbox(execution)
+    with patcher, patch("tools.code_runner.code_runner.Path") as mock_path:
+        mock_path.return_value.read_text.return_value = "long_computation()"
+        result = execute_code_file.invoke(
+            {"file_path": "slow_script.py", "timeout": 120}
+        )
+
+    sandbox.run_code.assert_called_once_with(
+        "long_computation()", language="python", timeout=120
+    )
+    assert isinstance(result, ToolSuccess)
 
 
 def test_execute_code_snippet_returns_tool_error_on_exception():

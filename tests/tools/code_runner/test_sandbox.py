@@ -21,7 +21,7 @@ def test_get_sandbox_creates_sandbox_on_first_call():
         result = get_sandbox()
 
     assert result is mock_sandbox
-    mock_cls.create.assert_called_once()
+    mock_cls.create.assert_called_once_with(timeout=3600)
 
 
 def test_get_sandbox_returns_same_instance_on_subsequent_calls():
