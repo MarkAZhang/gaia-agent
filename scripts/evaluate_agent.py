@@ -21,6 +21,15 @@ def main():
         default="",
         help="Description for the evaluation run",
     )
+    parser.add_argument(
+        "--example-ids",
+        nargs="+",
+        default=None,
+        help=(
+            "Optional LangSmith example IDs to evaluate within the dataset "
+            "(defaults to all examples)"
+        ),
+    )
     args = parser.parse_args()
 
     load_dotenv()
@@ -28,6 +37,7 @@ def main():
         dataset_name=args.evaluation_set,
         name=args.name,
         description=args.description,
+        example_ids=args.example_ids,
     )
 
 

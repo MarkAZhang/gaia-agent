@@ -37,7 +37,7 @@ def _build_with_mock(mock_llm: MagicMock):
     ):
         mock_chat_anthropic.return_value.bind_tools.return_value = mock_llm
 
-        result = build_agent_graph_and_config(tracing_handler=None)
+        result = build_agent_graph_and_config()
         return result.graph, result.config
 
 

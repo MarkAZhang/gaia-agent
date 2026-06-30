@@ -139,7 +139,7 @@ cp .env.example .env
 uv run evaluate my-dataset --name "baseline-run" --description "Validation set eval"
 ```
 
-Set `USE_LANGSMITH=1` in `.env` to enable tracing for interactive runs.
+Set `LANGSMITH_TRACING=true` in `.env` to enable tracing for interactive runs.
 
 ### Dataset migration from Langfuse
 

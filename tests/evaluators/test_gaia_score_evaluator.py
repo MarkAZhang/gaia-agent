@@ -19,9 +19,6 @@ def _make_outputs(answer: str) -> dict:
     return {
         "answer": answer,
         "metrics": {
-            "latency_seconds": 1.0,
-            "input_tokens": 10,
-            "output_tokens": 5,
             "total_turns": 1,
         },
     }
