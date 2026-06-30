@@ -106,6 +106,28 @@ class TestEvaluateAgentOnDataset:
         assert kwargs["description"] == "test run"
         assert kwargs["max_concurrency"] == 1
         assert len(kwargs["evaluators"]) == 2
+        mock_client.list_examples.assert_not_called()
+
+    @patch("evaluate_agent_on_dataset.Client")
+    def test_fetches_examples_when_example_ids_provided(self, mock_client_cls):
+        mock_client = MagicMock()
+        mock_examples = [MagicMock(), MagicMock()]
+        mock_client.list_examples.return_value = mock_examples
+        mock_client_cls.return_value = mock_client
+
+        evaluate_agent_on_dataset(
+            dataset_name="my-dataset",
+            name="run-1",
+            description="test run",
+            example_ids=["abc-123", "def-456"],
+        )
+
+        mock_client.list_examples.assert_called_once_with(
+            dataset_name="my-dataset",
+            example_ids=["abc-123", "def-456"],
+        )
+        _, kwargs = mock_client.evaluate.call_args
+        assert kwargs["data"] == mock_examples
 
     @patch("evaluate_agent_on_dataset.Client")
     def test_uses_default_experiment_prefix_when_name_empty(self, mock_client_cls):

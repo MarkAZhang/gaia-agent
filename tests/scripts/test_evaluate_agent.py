@@ -19,6 +19,7 @@ class TestEvaluateAgentScript:
             dataset_name="my-dataset",
             name="",
             description="",
+            example_ids=None,
         )
 
     @patch("scripts.evaluate_agent.evaluate_agent_on_dataset")
@@ -41,6 +42,29 @@ class TestEvaluateAgentScript:
             dataset_name="my-dataset",
             name="run-1",
             description="test run",
+            example_ids=None,
+        )
+
+    @patch("scripts.evaluate_agent.evaluate_agent_on_dataset")
+    @patch("scripts.evaluate_agent.load_dotenv")
+    def test_passes_example_ids(self, mock_load_dotenv, mock_evaluate):
+        with patch(
+            "sys.argv",
+            [
+                "evaluate_agent",
+                "my-dataset",
+                "--example-ids",
+                "abc-123",
+                "def-456",
+            ],
+        ):
+            main()
+
+        mock_evaluate.assert_called_once_with(
+            dataset_name="my-dataset",
+            name="",
+            description="",
+            example_ids=["abc-123", "def-456"],
         )
 
     @patch("scripts.evaluate_agent.evaluate_agent_on_dataset")

@@ -45,11 +45,24 @@ def run_agent_for_dataset_item(inputs: DatasetItemInput) -> dict:
     }
 
 
-def evaluate_agent_on_dataset(dataset_name: str, name: str, description: str):
+def evaluate_agent_on_dataset(
+    dataset_name: str,
+    name: str,
+    description: str,
+    example_ids: list[str] | None = None,
+):
     client = Client()
+    data: str | list = dataset_name
+    if example_ids:
+        data = list(
+            client.list_examples(
+                dataset_name=dataset_name,
+                example_ids=example_ids,
+            )
+        )
     client.evaluate(
         run_agent_for_dataset_item,
-        data=dataset_name,
+        data=data,
         evaluators=[
             gaia_score_evaluator,
             total_turns_evaluator,
