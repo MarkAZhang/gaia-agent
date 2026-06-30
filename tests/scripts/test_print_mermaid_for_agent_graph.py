@@ -6,15 +6,13 @@ from scripts.print_mermaid_for_agent_graph import main
 class TestPrintMermaidScript:
     @patch("scripts.print_mermaid_for_agent_graph.build_agent_graph_and_config")
     @patch("scripts.print_mermaid_for_agent_graph.load_dotenv")
-    def test_calls_build_agent_graph_with_no_tracing(
-        self, mock_load_dotenv, mock_build
-    ):
+    def test_calls_build_agent_graph(self, mock_load_dotenv, mock_build):
         mock_graph = MagicMock()
         mock_build.return_value = mock_graph
 
         main()
 
-        mock_build.assert_called_once_with(tracing_handler=None)
+        mock_build.assert_called_once_with()
 
     @patch("scripts.print_mermaid_for_agent_graph.build_agent_graph_and_config")
     @patch("scripts.print_mermaid_for_agent_graph.load_dotenv")

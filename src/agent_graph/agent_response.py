@@ -5,9 +5,6 @@ from dataclasses import dataclass
 class AgentRunMetrics:
     """Metrics collected during an agent run."""
 
-    latency_seconds: float
-    input_tokens: int
-    output_tokens: int
     total_turns: int
 
 

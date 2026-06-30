@@ -1,8 +1,6 @@
-import time
 from typing import Optional
 
 from langchain_core.messages import AIMessage, BaseMessage, ToolMessage
-from langchain_core.callbacks.base import BaseCallbackHandler
 
 from agent_graph.agent_response import AgentResponse, AgentRunMetrics
 from agent_graph.build_agent_graph_and_config import build_agent_graph_and_config
@@ -11,36 +9,27 @@ from agent_graph.guardrails.user_input_deobfuscator import deobfuscate_user_inpu
 from tools.shutdown_tools import shutdown_tools
 
 
-def _compute_metrics(messages: list[BaseMessage]) -> tuple[int, int, int]:
-    """Extract token usage and turn counts from graph result messages."""
-    input_tokens = 0
-    output_tokens = 0
+def _compute_total_turns(messages: list[BaseMessage]) -> int:
+    """Count LLM calls and tool calls from graph result messages."""
     total_turns = 0
 
     for msg in messages:
-        if isinstance(msg, AIMessage):
-            total_turns += 1
-            usage = getattr(msg, "response_metadata", {}).get("usage", {})
-            input_tokens += usage.get("input_tokens", 0)
-            output_tokens += usage.get("output_tokens", 0)
-        elif isinstance(msg, ToolMessage):
+        if isinstance(msg, (AIMessage, ToolMessage)):
             total_turns += 1
 
-    return input_tokens, output_tokens, total_turns
+    return total_turns
 
 
 def invoke_agent_with_user_message(
     input_str: str,
-    tracing_handler: Optional[BaseCallbackHandler],
     available_file_path: Optional[str] = None,
 ) -> AgentResponse:
     deobfuscation_result = deobfuscate_user_input(input_str)
     user_message = deobfuscation_result.text
 
-    compiled_graph_and_config = build_agent_graph_and_config(tracing_handler)
+    compiled_graph_and_config = build_agent_graph_and_config()
     system_prompt = build_system_prompt(available_file_path)
 
-    start_time = time.monotonic()
     try:
         result = compiled_graph_and_config.graph.invoke(
             {
@@ -53,19 +42,13 @@ def invoke_agent_with_user_message(
         )
     finally:
         shutdown_tools()
-    latency_seconds = time.monotonic() - start_time
 
     messages = result["messages"]
     final_answer = messages[-1].content if messages else "No answer found"
-    input_tokens, output_tokens, total_turns = _compute_metrics(messages)
+    total_turns = _compute_total_turns(messages)
 
     return AgentResponse(
         answer=final_answer,
-        metrics=AgentRunMetrics(
-            latency_seconds=latency_seconds,
-            input_tokens=input_tokens,
-            output_tokens=output_tokens,
-            total_turns=total_turns,
-        ),
+        metrics=AgentRunMetrics(total_turns=total_turns),
         deobfuscation_method=deobfuscation_result.technique,
     )
