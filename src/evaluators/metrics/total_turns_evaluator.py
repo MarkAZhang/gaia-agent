@@ -1,19 +1,21 @@
-from typing import Any, Dict, Union
-
-from langfuse import Evaluation
-
-from agent_graph.agent_response import AgentResponse
+from typing import Any
 
 
 def total_turns_evaluator(
-    *, output: Union[str, Dict[str, Any], AgentResponse], **kwargs: Any
-) -> Evaluation:
+    *, outputs: dict[str, Any], **kwargs: Any
+) -> dict[str, Any]:
     """Evaluator that reports the total number of turns (LLM calls + tool calls)."""
-    if not isinstance(output, AgentResponse):
-        return Evaluation(name="total_turns", value=0, comment="No AgentResponse")
+    metrics = outputs.get("metrics")
+    if not isinstance(metrics, dict):
+        return {
+            "key": "total_turns",
+            "score": 0,
+            "comment": "No metrics in output",
+        }
 
-    return Evaluation(
-        name="total_turns",
-        value=output.metrics.total_turns,
-        comment=f"Total turns: {output.metrics.total_turns}",
-    )
+    total_turns = metrics.get("total_turns", 0)
+    return {
+        "key": "total_turns",
+        "score": total_turns,
+        "comment": f"Total turns: {total_turns}",
+    }

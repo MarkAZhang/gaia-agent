@@ -115,7 +115,7 @@ class TestInvokeAgentWithUserMessage:
             ]
         }
 
-        result = invoke_agent_with_user_message("say hello", langfuse_handler=None)
+        result = invoke_agent_with_user_message("say hello", tracing_handler=None)
 
         assert isinstance(result, AgentResponse)
         assert result.answer == "Hello world"
@@ -145,7 +145,7 @@ class TestInvokeAgentWithUserMessage:
         mock__build_graph.return_value = mock_graph
         mock_graph.invoke.return_value = {"messages": []}
 
-        result = invoke_agent_with_user_message("say hello", langfuse_handler=None)
+        result = invoke_agent_with_user_message("say hello", tracing_handler=None)
 
         assert result.answer == "No answer found"
         assert result.metrics.input_tokens == 0
@@ -173,7 +173,7 @@ class TestInvokeAgentWithUserMessage:
         mock__build_graph.return_value = mock_graph
         mock_graph.invoke.return_value = {"messages": [AIMessage(content="response")]}
 
-        invoke_agent_with_user_message("test question", langfuse_handler=None)
+        invoke_agent_with_user_message("test question", tracing_handler=None)
 
         call_args = mock_graph.invoke.call_args
         messages = call_args[0][0]["messages"]
@@ -186,7 +186,7 @@ class TestInvokeAgentWithUserMessage:
     @patch("agent_graph.build_agent_graph_and_config._build_graph")
     @patch("agent_graph.build_agent_graph_and_config.ChatAnthropic")
     @patch("agent_graph.build_agent_graph_and_config.create_web_search")
-    def test_includes_langfuse_handler_in_callbacks(
+    def test_includes_tracing_handler_in_callbacks(
         self,
         mock_create_web_search,
         mock_chat_anthropic,
@@ -203,7 +203,7 @@ class TestInvokeAgentWithUserMessage:
         mock_graph.invoke.return_value = {"messages": [AIMessage(content="response")]}
 
         mock_handler = MagicMock()
-        invoke_agent_with_user_message("question", langfuse_handler=mock_handler)
+        invoke_agent_with_user_message("question", tracing_handler=mock_handler)
 
         call_args = mock_graph.invoke.call_args
         config = call_args[1]["config"]
@@ -214,7 +214,7 @@ class TestInvokeAgentWithUserMessage:
     @patch("agent_graph.build_agent_graph_and_config._build_graph")
     @patch("agent_graph.build_agent_graph_and_config.ChatAnthropic")
     @patch("agent_graph.build_agent_graph_and_config.create_web_search")
-    def test_no_callbacks_when_langfuse_handler_is_none(
+    def test_no_callbacks_when_tracing_handler_is_none(
         self,
         mock_create_web_search,
         mock_chat_anthropic,
@@ -230,7 +230,7 @@ class TestInvokeAgentWithUserMessage:
         mock__build_graph.return_value = mock_graph
         mock_graph.invoke.return_value = {"messages": [AIMessage(content="response")]}
 
-        invoke_agent_with_user_message("question", langfuse_handler=None)
+        invoke_agent_with_user_message("question", tracing_handler=None)
 
         call_args = mock_graph.invoke.call_args
         config = call_args[1]["config"]
@@ -259,7 +259,7 @@ class TestInvokeAgentWithUserMessage:
         mock__build_graph.return_value = mock_graph
         mock_graph.invoke.return_value = {"messages": [AIMessage(content="response")]}
 
-        invoke_agent_with_user_message("question", langfuse_handler=None)
+        invoke_agent_with_user_message("question", tracing_handler=None)
 
         mock__build_graph.assert_called_once_with(
             tools=[
@@ -296,7 +296,7 @@ class TestInvokeAgentWithUserMessage:
         mock__build_graph.return_value = mock_graph
         mock_graph.invoke.return_value = {"messages": [AIMessage(content="response")]}
 
-        invoke_agent_with_user_message("question", langfuse_handler=None)
+        invoke_agent_with_user_message("question", tracing_handler=None)
 
         mock_llm_instance.bind_tools.assert_called_once_with(
             [
@@ -330,7 +330,7 @@ class TestInvokeAgentWithUserMessage:
         mock__build_graph.return_value = mock_graph
         mock_graph.invoke.return_value = {"messages": [AIMessage(content="response")]}
 
-        result = invoke_agent_with_user_message("question", langfuse_handler=None)
+        result = invoke_agent_with_user_message("question", tracing_handler=None)
 
         assert result.metrics.latency_seconds >= 0
 
@@ -356,7 +356,7 @@ class TestInvokeAgentWithUserMessage:
 
         invoke_agent_with_user_message(
             "question",
-            langfuse_handler=None,
+            tracing_handler=None,
             available_file_path="2023/validation/abc.png",
         )
 

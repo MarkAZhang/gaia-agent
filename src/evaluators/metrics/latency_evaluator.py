@@ -1,19 +1,21 @@
-from typing import Any, Dict, Union
-
-from langfuse import Evaluation
-
-from agent_graph.agent_response import AgentResponse
+from typing import Any
 
 
 def latency_evaluator(
-    *, output: Union[str, Dict[str, Any], AgentResponse], **kwargs: Any
-) -> Evaluation:
+    *, outputs: dict[str, Any], **kwargs: Any
+) -> dict[str, Any]:
     """Evaluator that reports the task latency in seconds."""
-    if not isinstance(output, AgentResponse):
-        return Evaluation(name="latency_seconds", value=0, comment="No AgentResponse")
+    metrics = outputs.get("metrics")
+    if not isinstance(metrics, dict):
+        return {
+            "key": "latency_seconds",
+            "score": 0,
+            "comment": "No metrics in output",
+        }
 
-    return Evaluation(
-        name="latency_seconds",
-        value=output.metrics.latency_seconds,
-        comment=f"Task completed in {output.metrics.latency_seconds:.2f}s",
-    )
+    latency_seconds = metrics.get("latency_seconds", 0)
+    return {
+        "key": "latency_seconds",
+        "score": latency_seconds,
+        "comment": f"Task completed in {latency_seconds:.2f}s",
+    }

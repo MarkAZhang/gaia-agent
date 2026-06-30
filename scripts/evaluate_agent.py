@@ -9,7 +9,7 @@ def main():
     parser = argparse.ArgumentParser(description="Evaluate agent on a dataset")
     parser.add_argument(
         "evaluation_set",
-        help="Name of the Langfuse evaluation dataset",
+        help="Name of the LangSmith evaluation dataset",
     )
     parser.add_argument(
         "--name",

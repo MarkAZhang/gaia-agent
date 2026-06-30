@@ -4,12 +4,8 @@ import re
 import string
 import warnings
 
+from typing import TYPE_CHECKING, Any
 
-from typing import TYPE_CHECKING, Any, Dict, Union
-
-from langfuse import Evaluation
-
-from agent_graph.agent_response import AgentResponse
 
 if TYPE_CHECKING:
     from evaluate_agent_on_dataset import DatasetItemInput
@@ -17,28 +13,32 @@ if TYPE_CHECKING:
 
 def gaia_score_evaluator(
     *,
-    input: DatasetItemInput,
-    output: Union[str, Dict[str, Any], AgentResponse],
-    expected_output: str,
-    **kwargs: Any,
-) -> Evaluation:
+    inputs: DatasetItemInput,
+    outputs: dict[str, Any],
+    reference_outputs: dict[str, Any],
+) -> dict[str, Any]:
     """
     Normalizes and compares the agent output with the GAIA ground truth.
 
     Uses the scoring script from the GAIA leaderboard.
     """
-    if not isinstance(output, AgentResponse):
-        return Evaluation(name="exact_match", value=0.0, comment="No AgentResponse")
+    answer = outputs.get("answer")
+    expected_output = reference_outputs.get("answer")
 
-    answer = output.answer
+    if answer is None or expected_output is None:
+        return {
+            "key": "exact_match",
+            "score": 0.0,
+            "comment": "Missing answer or reference output",
+        }
 
-    is_correct = question_scorer(answer, expected_output)
+    is_correct = question_scorer(str(answer), str(expected_output))
 
-    return Evaluation(
-        name="exact_match",
-        value=1.0 if is_correct else 0.0,
-        comment=f"Expected: {expected_output} | Got: {answer}",
-    )
+    return {
+        "key": "exact_match",
+        "score": 1.0 if is_correct else 0.0,
+        "comment": f"Expected: {expected_output} | Got: {answer}",
+    }
 
 
 """
